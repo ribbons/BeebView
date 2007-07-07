@@ -269,7 +269,7 @@ void BeebView_UpdateTitle(HWND hWnd)
    lstrcat(szWindowTitle, " - ");
    lstrcat(szWindowTitle, szFileTitle);
    lstrcat(szWindowTitle, "  [MODE");
-   itoa(nMode, szMode, 10);
+   _itoa_s(nMode, szMode, 10);
    lstrcat(szWindowTitle, szMode);
    lstrcat(szWindowTitle, "]");
    SetWindowText(hWnd, szWindowTitle);
