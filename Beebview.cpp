@@ -419,9 +419,9 @@ void BeebView_MakePic04(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
    unsigned int Byte;
    unsigned int index;
    COLORREF colour[2];
-   int nBlocks = 20480 / BBC_HEIGHT;
+   int nBlocks = 80;
    if(nMode > 3) {
-      nBlocks = 10240 / BBC_HEIGHT;
+      nBlocks = 40;
    }
    int nX = 0;
    int nY = 0;
@@ -434,8 +434,8 @@ void BeebView_MakePic04(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
       for(j = 0; j < nBlocks; j++) {
          if(_lread(hFileHandle, buffer, BYTES) < BYTES) {
             MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-         break;
-				}
+			break;
+		 }
          for(i = 0; i < BYTES; i++) {
             Byte = buffer[i];
             for(bit = 0; bit < 8; bit++) {
@@ -458,9 +458,9 @@ void BeebView_MakePic15(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
    int i, j, k;
    unsigned int Byte;
    unsigned int index;
-   int nBlocks = 20480 / BBC_HEIGHT;
+   int nBlocks = 80;
    if(nMode > 3) {
-      nBlocks = 10240 / BBC_HEIGHT;
+      nBlocks = 40;
    }
    int nX = 0;
    int nY = 0;
@@ -497,7 +497,7 @@ void BeebView_MakePic2(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
    int i, j, k;
    unsigned int Byte;
    unsigned int index;
-   int nBlocks = 20480 / BBC_HEIGHT;
+   int nBlocks = 80;
    int nX = 0;
    int nY = 0;
    char buffer[8];
