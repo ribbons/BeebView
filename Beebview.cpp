@@ -188,6 +188,7 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_SAVEAS:
+			SaveDialog(hWnd, szSaveFilterSpec, szSaveFileName, MAX_PATH, "Save file", szSaveFileTitle, MAX_PATH);
 			BeebView_SaveBitmap(hWnd);
 			break;
 		case IDM_EXIT:
@@ -545,7 +546,8 @@ void BeebView_SaveBitmap(HWND hWnd) {
 	// paint the bitmap
 	int res=StretchBlt(SizedDC, 0, 0, BV_WIDTH, BV_HEIGHT, BitmapDC, 0, 0, nWidth, BBC_HEIGHT, SRCCOPY);
 
-	SaveDib(SizedDC, "c:\\temp.bmp", true);
+	// Save the bitmap
+	SaveDib(SizedDC, szSaveFileName, true);
 
 	// select previous bitmap
 	SelectBitmap(BitmapDC, OldBitmap);
@@ -575,6 +577,24 @@ BOOL OpenDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen,
     opfil.lpstrTitle = dlgtitle;                //title of dialog box
     opfil.Flags = OFN_HIDEREADONLY;             //optional flags    
     return GetOpenFileName(&opfil);    
+}
+
+BOOL SaveDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen,
+                LPSTR dlgtitle=NULL, LPSTR filtitle=NULL, UINT iFilTitleLen=0)
+{
+    OPENFILENAME opfil;
+    memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
+    opfil.lStructSize = sizeof(opfil);
+	opfil.hwndOwner = hwndOwner;
+    opfil.hInstance = NULL;	                    //application instance
+    opfil.lpstrFilter = filter;                 //filter of files separated by \0
+    opfil.lpstrFile = fil;                      //absolute path of filename
+    opfil.nMaxFile = iFilLen;                   //length of filename buffer    
+    opfil.lpstrFileTitle = filtitle;            //filename with no path
+    opfil.nMaxFileTitle = iFilTitleLen;         //length of filename buffer
+    opfil.lpstrTitle = dlgtitle;                //title of dialog box
+    opfil.Flags = OFN_HIDEREADONLY;             //optional flags    
+    return GetSaveFileName(&opfil);
 }
 
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent) 

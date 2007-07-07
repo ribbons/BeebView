@@ -18,10 +18,12 @@
 
 // Variables
 HBITMAP TheBitmap;
-// file type filters
 char szFilterSpec [128] = "BBC Graphics Files (*.BBG)\0*.BBG\0All Files (*.*)\0*.*\0";
 char szFileName[MAX_PATH] = "";
 char szFileTitle[MAX_PATH] = "";
+char szSaveFilterSpec [128] = "Windows Bitmap (*.BMP)\0*.BMP\0All Files (*.*)\0*.*\0";
+char szSaveFileName[MAX_PATH] = "";
+char szSaveFileTitle[MAX_PATH] = "";
 char szWindowTitle[80];
 
 // Message Handler Functions
@@ -43,6 +45,7 @@ void BeebView_MakePic2(HWND, HFILE, HDC);
 void BeebView_SaveBitmap(HWND hWnd);
 
 // Util Functions
+BOOL SaveDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen, LPSTR dlgtitle, LPSTR filtitle, UINT iFilTitleLen);
 BOOL OpenDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen, LPSTR dlgtitle, LPSTR filtitle, UINT iFilTitleLen);
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 
