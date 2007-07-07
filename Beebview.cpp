@@ -237,12 +237,6 @@ void BeebView_OnPaint(HWND hWnd)
 	// paint the bitmap
 	StretchBlt(ScreenDC, 0, 0, BV_WIDTH, BV_HEIGHT, BitmapDC, 0, 0, nWidth, BBC_HEIGHT, SRCCOPY);
 
-	/*if(bSave) {
-		HDC StretchedDC = CreateCompatibleDC(ScreenDC);
-		StretchBlt(StretchedDC, 0, 0, BV_WIDTH, BV_HEIGHT, BitmapDC, 0, 0, nWidth, BBC_HEIGHT, SRCCOPY);
-		SaveDib(StretchedDC, szSaveName, true);
-	}*/
-
 	// select previous bitmap
 	SelectBitmap(BitmapDC, OldBitmap);
 	// release DC
