@@ -309,18 +309,18 @@ void BeebView_CycleColour(int colour)
 
 void BeebView_SetBitmapPixels(HWND hWnd)
 {
-	HFILE hFileHandle;
+	HANDLE hFileHandle;
 	int nWidth = BeebView_Width(hWnd, nMode);
 
 	// check for empty filename string
-	if(strlen(szFileTitle) == 0) {
+	if(strlen(szFileName) == 0) {
 		BeebView_UpdateTitle(hWnd);
 		return;
 	}
 
 	// open the file
-	hFileHandle = OpenFile(szFileTitle, &of, OF_READ);
-	if(hFileHandle == NULL) {
+	hFileHandle = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
+	if(hFileHandle == INVALID_HANDLE_VALUE) {
 		MessageBox(hWnd, "Failed to open file", "File Error", MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
@@ -365,7 +365,7 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 				MessageBox(hWnd, "Invalid screen mode!", "Program Error", MB_ICONASTERISK | MB_OK);
 		}
 		// close the file
-		_lclose(hFileHandle);
+		CloseHandle(hFileHandle);
 	}
 
 	// select previous bitmap
@@ -407,16 +407,19 @@ int BeebView_Width(HWND hWnd, int mode)
 
 /* MODE 0 or MODE 4 picture */
 
-void BeebView_MakePic04(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
+void BeebView_MakePic04(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
 {
    int bit, i, j, k;
    unsigned int Byte;
    unsigned int index;
    COLORREF colour[2];
+   DWORD bytesRead;
+   
    int nBlocks = 80;
    if(nMode > 3) {
       nBlocks = 40;
    }
+   
    int nX = 0;
    int nY = 0;
    char buffer[8];
@@ -426,9 +429,10 @@ void BeebView_MakePic04(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
 
    for(k = 0; k < YBLOCKS; k++) {
       for(j = 0; j < nBlocks; j++) {
-         if(_lread(hFileHandle, buffer, BYTES) < BYTES) {
+		 ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
+         if(bytesRead < BYTES) {
             MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-			break;
+			return;
 		 }
          for(i = 0; i < BYTES; i++) {
             Byte = buffer[i];
@@ -447,24 +451,28 @@ void BeebView_MakePic04(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
 
 /* MODE 1 or MODE 5 picture */
 
-void BeebView_MakePic15(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
+void BeebView_MakePic15(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
 {
    int i, j, k;
    unsigned int Byte;
    unsigned int index;
    int nBlocks = 80;
+   DWORD bytesRead;
+
    if(nMode > 3) {
       nBlocks = 40;
    }
+
    int nX = 0;
    int nY = 0;
    char buffer[8];
 
    for(k = 0; k < YBLOCKS; k++) {
       for(j = 0; j < nBlocks; j++) {
-         if(_lread(hFileHandle, buffer, BYTES) < BYTES) {
+	     ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
+         if(bytesRead < BYTES) {
             MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-            break;
+            return;
          }
          for(i = 0; i < BYTES; i++) {
 				Byte = buffer[i];
@@ -486,11 +494,12 @@ void BeebView_MakePic15(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
 
 /* MODE 2 picture */
 
-void BeebView_MakePic2(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
+void BeebView_MakePic2(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
 {
    int i, j, k;
    unsigned int Byte;
    unsigned int index;
+   DWORD bytesRead;
    int nBlocks = 80;
    int nX = 0;
    int nY = 0;
@@ -499,9 +508,10 @@ void BeebView_MakePic2(HWND hWnd, HFILE hFileHandle, HDC BitmapDC)
 // set colours
    for(k = 0; k < YBLOCKS; k++) {
       for(j = 0; j < nBlocks; j++) {
-         if(_lread(hFileHandle, buffer, BYTES) < BYTES) {
+	     ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
+         if(bytesRead < BYTES) {
             MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-            break;
+            return;
          }
          for(i = 0; i < BYTES; i++) {
             Byte = buffer[i];
@@ -637,7 +647,7 @@ BOOL CenterWindow (HWND hwndChild, HWND hwndParent)
 
 		// Set it, and return 
         return SetWindowPos (hwndChild, NULL, xNew, yNew, 0, 0, SWP_NOSIZE | SWP_NOZORDER); 
-} 
+}
 
 void SaveDib(HDC hDC, LPCTSTR lpszFileName, BOOL bOverwriteExisting)
 {

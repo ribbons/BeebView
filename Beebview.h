@@ -39,9 +39,9 @@ COLORREF BeebView_GetColour(int);
 void BeebView_CycleColour(int);
 void BeebView_SetBitmapPixels(HWND);
 int  BeebView_Width(HWND, int);
-void BeebView_MakePic04(HWND, HFILE, HDC);
-void BeebView_MakePic15(HWND, HFILE, HDC);
-void BeebView_MakePic2(HWND, HFILE, HDC);
+void BeebView_MakePic04(HWND, HANDLE, HDC);
+void BeebView_MakePic15(HWND, HANDLE, HDC);
+void BeebView_MakePic2(HWND, HANDLE, HDC);
 void BeebView_SaveBitmap(HWND hWnd);
 
 // Util Functions
