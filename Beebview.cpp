@@ -108,11 +108,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    hInst = hInstance; // Store instance handle in our global variable
 
-   int nWidth = BV_WIDTH + (GetSystemMetrics(SM_CXFIXEDFRAME)*2);
-   int nHeight = BV_HEIGHT + GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYMENU) + (GetSystemMetrics(SM_CYFIXEDFRAME)*2);
-
    hWnd = CreateWindow(szWindowClass, szAppName, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-      CW_USEDEFAULT, 0, nWidth, nHeight, NULL, NULL, hInstance, NULL);
+      CW_USEDEFAULT, 0, WindowWidth(), WindowHeight(BV_DEFAULT_HEIGHT), NULL, NULL, hInstance, NULL);
 
    if (!hWnd)
    {
@@ -235,7 +232,7 @@ void BeebView_OnPaint(HWND hWnd)
 	HBITMAP OldBitmap = SelectBitmap(BitmapDC, TheBitmap);
 
 	// paint the bitmap
-	StretchBlt(ScreenDC, 0, 0, BV_WIDTH, BV_HEIGHT, BitmapDC, 0, 0, nWidth, BBC_HEIGHT, SRCCOPY);
+	StretchBlt(ScreenDC, 0, 0, BV_WIDTH, iClientHeight, BitmapDC, 0, 0, nWidth, iBBCHeight, SRCCOPY);
 
 	// select previous bitmap
 	SelectBitmap(BitmapDC, OldBitmap);
@@ -325,6 +322,36 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 		return;
 	}
 
+	// Work out how many rows of blocks there are in this file.
+	int iFileSize = GetFileSize(hFileHandle, NULL);
+	int iBlocksInFile = iFileSize / BYTES;
+	int iBlockRows;
+
+	switch(nMode)
+	{
+		case 0:
+			iBlockRows = iBlocksInFile / BBC_XBLKS0;
+			break;
+		case 1:
+			iBlockRows = iBlocksInFile / BBC_XBLKS1;
+			break;
+		case 2:
+			iBlockRows = iBlocksInFile / BBC_XBLKS2;
+			break;
+		case 4:
+			iBlockRows = iBlocksInFile / BBC_XBLKS4;
+			break;
+		case 5:
+			iBlockRows = iBlocksInFile / BBC_XBLKS5;
+			break;
+		default:
+			MessageBox(hWnd, "Invalid screen mode!", "Program Error", MB_ICONASTERISK | MB_OK);
+	}
+
+	// Calculate how tall the image is based on the number of rows of blocks.
+	iBBCHeight = iBlockRows * BYTES;
+	iClientHeight = iBBCHeight * 2;
+
 	// update the window title bar
 	BeebView_UpdateTitle(hWnd);
 
@@ -335,7 +362,7 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 	HDC ScreenDC = GetDC(hWnd);
 
 	// create a bitmap, compatible with the screen
-	TheBitmap = CreateCompatibleBitmap(ScreenDC, nWidth, BBC_HEIGHT);
+	TheBitmap = CreateCompatibleBitmap(ScreenDC, nWidth, iBBCHeight);
 
 	// create a DC for it
 	HDC BitmapDC = CreateCompatibleDC(ScreenDC);
@@ -347,32 +374,31 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 	HBITMAP OldBitmap = SelectBitmap(BitmapDC, TheBitmap);
 
 	// set pixels
-	if(hFileHandle != NULL) {
-		switch(nMode)
-		{
-			case 0:
-			case 4:
-				BeebView_MakePic04(hWnd, hFileHandle, BitmapDC);
-				break;
-			case 1:
-			case 5:
-				BeebView_MakePic15(hWnd, hFileHandle, BitmapDC);
-				break;
-			case 2:
-				BeebView_MakePic2(hWnd, hFileHandle, BitmapDC);
-				break;
-			default:
-				MessageBox(hWnd, "Invalid screen mode!", "Program Error", MB_ICONASTERISK | MB_OK);
-		}
-		// close the file
-		CloseHandle(hFileHandle);
+	switch(nMode)
+	{
+		case 0:
+		case 4:
+			BeebView_MakePic04(hWnd, hFileHandle, BitmapDC, iBlockRows);
+			break;
+		case 1:
+		case 5:
+			BeebView_MakePic15(hWnd, hFileHandle, BitmapDC, iBlockRows);
+			break;
+		case 2:
+			BeebView_MakePic2(hWnd, hFileHandle, BitmapDC, iBlockRows);
+			break;
 	}
+	// close the file
+	CloseHandle(hFileHandle);
 
 	// select previous bitmap
 	SelectBitmap(BitmapDC, OldBitmap);
 
 	// release bitmap DC
 	DeleteDC(BitmapDC);
+
+	// Resize the window
+	SetWindowPos (hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(iClientHeight), SWP_NOMOVE | SWP_NOZORDER);
 
 	// invalidate the client area to force a repaint
 	InvalidateRect(hWnd, NULL, TRUE);
@@ -407,27 +433,26 @@ int BeebView_Width(HWND hWnd, int mode)
 
 /* MODE 0 or MODE 4 picture */
 
-void BeebView_MakePic04(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
+void BeebView_MakePic04(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks)
 {
    int bit, i, j, k;
    unsigned int Byte;
    unsigned int index;
    COLORREF colour[2];
    DWORD bytesRead;
-   
-   int nBlocks = 80;
-   if(nMode > 3) {
-      nBlocks = 40;
-   }
-   
    int nX = 0;
    int nY = 0;
    char buffer[8];
+   int nBlocks = BBC_XBLKS0;
+   
+   if(nMode == 4) {
+      nBlocks = BBC_XBLKS4;
+   }
 
    colour[0] = palette[0];
    colour[1] = palette[7];
 
-   for(k = 0; k < YBLOCKS; k++) {
+   for(k = 0; k < iYBlocks; k++) {
       for(j = 0; j < nBlocks; j++) {
 		 ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
          if(bytesRead < BYTES) {
@@ -451,23 +476,22 @@ void BeebView_MakePic04(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
 
 /* MODE 1 or MODE 5 picture */
 
-void BeebView_MakePic15(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
+void BeebView_MakePic15(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks)
 {
    int i, j, k;
    unsigned int Byte;
    unsigned int index;
-   int nBlocks = 80;
    DWORD bytesRead;
-
-   if(nMode > 3) {
-      nBlocks = 40;
-   }
-
    int nX = 0;
    int nY = 0;
    char buffer[8];
+   int nBlocks = BBC_XBLKS1;
 
-   for(k = 0; k < YBLOCKS; k++) {
+   if(nMode > 3) {
+      nBlocks = BBC_XBLKS5;
+   }
+
+   for(k = 0; k < iYBlocks; k++) {
       for(j = 0; j < nBlocks; j++) {
 	     ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
          if(bytesRead < BYTES) {
@@ -494,19 +518,19 @@ void BeebView_MakePic15(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
 
 /* MODE 2 picture */
 
-void BeebView_MakePic2(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC)
+void BeebView_MakePic2(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks)
 {
    int i, j, k;
    unsigned int Byte;
    unsigned int index;
    DWORD bytesRead;
-   int nBlocks = 80;
    int nX = 0;
    int nY = 0;
    char buffer[8];
+   int nBlocks = BBC_XBLKS2;
 
 // set colours
-   for(k = 0; k < YBLOCKS; k++) {
+   for(k = 0; k < iYBlocks; k++) {
       for(j = 0; j < nBlocks; j++) {
 	     ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
          if(bytesRead < BYTES) {
@@ -540,7 +564,7 @@ void BeebView_SaveBitmap(HWND hWnd) {
 	HBITMAP OldBitmap = SelectBitmap(BitmapDC, TheBitmap);
 
 	// create a bitmap, compatible with the screen
-	HBITMAP SizedBitmap = CreateCompatibleBitmap(ScreenDC, BV_WIDTH, BV_HEIGHT);
+	HBITMAP SizedBitmap = CreateCompatibleBitmap(ScreenDC, BV_WIDTH, iClientHeight);
 
 	// create a DC for it
 	HDC SizedDC = CreateCompatibleDC(ScreenDC);
@@ -548,7 +572,7 @@ void BeebView_SaveBitmap(HWND hWnd) {
 	HBITMAP OldSizedBitmap = SelectBitmap(SizedDC, SizedBitmap);
 
 	// paint the bitmap
-	int res=StretchBlt(SizedDC, 0, 0, BV_WIDTH, BV_HEIGHT, BitmapDC, 0, 0, nWidth, BBC_HEIGHT, SRCCOPY);
+	int res=StretchBlt(SizedDC, 0, 0, BV_WIDTH, iClientHeight, BitmapDC, 0, 0, nWidth, iBBCHeight, SRCCOPY);
 
 	// Save the bitmap
 	SaveDib(SizedDC, szSaveFileName, true);
@@ -647,6 +671,14 @@ BOOL CenterWindow (HWND hwndChild, HWND hwndParent)
 
 		// Set it, and return 
         return SetWindowPos (hwndChild, NULL, xNew, yNew, 0, 0, SWP_NOSIZE | SWP_NOZORDER); 
+}
+
+int WindowHeight(int iClientHeight) {
+	return iClientHeight + GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYMENU) + (GetSystemMetrics(SM_CYFIXEDFRAME)*2);
+}
+
+int WindowWidth() {
+	return BV_WIDTH + (GetSystemMetrics(SM_CXFIXEDFRAME)*2);
 }
 
 void SaveDib(HDC hDC, LPCTSTR lpszFileName, BOOL bOverwriteExisting)
