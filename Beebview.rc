@@ -52,7 +52,6 @@ BEGIN
         MENUITEM "Mode &0",                     IDM_MODE0
         MENUITEM "Mode &1",                     IDM_MODE1
         MENUITEM "Mode &2",                     IDM_MODE2
-        MENUITEM "Mode &3",                     IDM_MODE3
         MENUITEM "Mode &4",                     IDM_MODE4
         MENUITEM "Mode &5",                     IDM_MODE5
     END

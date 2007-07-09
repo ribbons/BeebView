@@ -16,7 +16,6 @@
 #define IDM_MODE0                       32787
 #define IDM_MODE1                       32788
 #define IDM_MODE2                       32789
-#define IDM_MODE3                       32790
 #define IDM_MODE4                       32791
 #define IDM_MODE5                       32792
 #define IDM_COL0                        32794
