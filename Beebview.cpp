@@ -197,7 +197,9 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_SAVEAS:
 			SaveDialog(hWnd, szSaveFilterSpec, szSaveFileName, MAX_PATH, "Save file", szSaveFileTitle, MAX_PATH);
-			BeebView_SaveBitmap(hWnd);
+			if(strlen(szSaveFileName) > 0) {
+				BeebView_SaveBitmap(hWnd);
+			}
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
@@ -562,7 +564,7 @@ void BeebView_MakePic2(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks
    }
 }
 
-void BeebView_SaveBitmap(HWND hWnd) {	
+void BeebView_SaveBitmap(HWND hWnd) {
 	int nWidth = BeebView_Width(hWnd, nMode);
 
 	// get the handle of the screen DC
