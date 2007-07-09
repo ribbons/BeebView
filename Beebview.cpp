@@ -136,10 +136,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) 
 	{
-		HANDLE_MSG(hWnd, WM_CREATE,  BeebView_OnCreate);
-		HANDLE_MSG(hWnd, WM_COMMAND, BeebView_OnCommand);
-		HANDLE_MSG(hWnd, WM_PAINT,   BeebView_OnPaint);
-		HANDLE_MSG(hWnd, WM_DESTROY, BeebView_OnDestroy);
+		HANDLE_MSG(hWnd, WM_CREATE,        BeebView_OnCreate);
+		HANDLE_MSG(hWnd, WM_INITMENUPOPUP, BeebView_OnInitMenuPopup);
+		HANDLE_MSG(hWnd, WM_COMMAND,       BeebView_OnCommand);
+		HANDLE_MSG(hWnd, WM_PAINT,         BeebView_OnPaint);
+		HANDLE_MSG(hWnd, WM_DESTROY,       BeebView_OnDestroy);
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
@@ -173,6 +174,16 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 	BeebView_InitPalette();
 	BeebView_SetBitmapPixels(hWnd);
 	return TRUE;
+}
+
+void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu)
+{
+	// Disable Save As... if no image is loaded
+	if(strlen(szFileName) > 0) {
+		EnableMenuItem(hMenu, IDM_SAVEAS, MF_ENABLED);
+	} else {
+		EnableMenuItem(hMenu, IDM_SAVEAS, MF_GRAYED);
+	}
 }
 
 void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)

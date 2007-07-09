@@ -34,6 +34,7 @@ int iBBCHeight = BBC_DEFAULT_HEIGHT;
 
 // Message Handler Functions
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct);
+void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu);
 void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify);
 void BeebView_OnPaint(HWND hWnd);
 void BeebView_OnDestroy(HWND hWnd);
