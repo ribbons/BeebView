@@ -185,24 +185,39 @@ void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMen
 		EnableMenuItem(hMenu, IDM_SAVEAS, MF_GRAYED);
 	}
 
-	if(nMode==0 | nMode==4) {
-		EnableMenuItem(hMenu, IDM_COL2, MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_COL3, MF_GRAYED);
-	} else {
-		EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
-	}
-
-	if(nMode==2) {
-		EnableMenuItem(hMenu, IDM_COL4, MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_COL5, MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_COL6, MF_ENABLED);
-		EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
-	} else {
-		EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
-		EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
+	switch(nMode) {
+		case 0:
+		case 4:
+			EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL1, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL2, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL3, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL4, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL5, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL6, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
+			break;
+		case 1:
+		case 5:
+			EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL4, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL5, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL6, MF_DISABLED);
+			EnableMenuItem(hMenu, IDM_COL7, MF_DISABLED);
+			break;
+		case 2:
+			EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL4, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL5, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL6, MF_ENABLED);
+			EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
+			break;
 	}
 }
 
