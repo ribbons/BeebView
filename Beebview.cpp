@@ -231,8 +231,10 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_SAVEAS:
-			SaveDialog(hWnd, szSaveFilterSpec, szSaveFileName, MAX_PATH, "Save file", szSaveFileTitle, MAX_PATH, "bmp");
-			if(strlen(szSaveFileName) > 0) {
+			// Set the default file title
+			strcpy(szSaveFileName, szFileTitle);
+			// Show the save as dialog
+			if(SaveDialog(hWnd, szSaveFilterSpec, szSaveFileName, MAX_PATH, "Save As", szSaveFileTitle, MAX_PATH, "bmp")) {
 				BeebView_SaveBitmap(hWnd);
 			}
 			break;
@@ -683,8 +685,17 @@ BOOL OpenDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen,
     opfil.lpstrFileTitle = filtitle;            //filename with no path
     opfil.nMaxFileTitle = iFilTitleLen;         //length of filename buffer
     opfil.lpstrTitle = dlgtitle;                //title of dialog box
-    opfil.Flags = OFN_HIDEREADONLY;             //optional flags    
-    return GetOpenFileName(&opfil);    
+    opfil.Flags = OFN_HIDEREADONLY;             //optional flags
+
+	BOOL bResult = GetOpenFileName(&opfil);
+	
+	// Trim the extension off the file title if there is a '.' in the title.
+	char *pPos = strrchr(filtitle, '.');
+	if(pPos != NULL) {
+		strncpy_s(filtitle, MAX_PATH, filtitle, (int)(pPos - filtitle));
+	}
+
+	return bResult;
 }
 
 BOOL SaveDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen,
