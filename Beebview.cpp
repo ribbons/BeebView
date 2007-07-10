@@ -184,6 +184,26 @@ void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMen
 	} else {
 		EnableMenuItem(hMenu, IDM_SAVEAS, MF_GRAYED);
 	}
+
+	if(nMode==0 | nMode==4) {
+		EnableMenuItem(hMenu, IDM_COL2, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL3, MF_GRAYED);
+	} else {
+		EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
+	}
+
+	if(nMode==2) {
+		EnableMenuItem(hMenu, IDM_COL4, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_COL5, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_COL6, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
+	} else {
+		EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
+	}
 }
 
 void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -222,6 +242,38 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_MODE5:
 			nMode = 5;
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL0:
+			BeebView_CycleColour(0);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL1:
+			BeebView_CycleColour(1);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL2:
+			BeebView_CycleColour(2);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL3:
+			BeebView_CycleColour(3);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL4:
+			BeebView_CycleColour(4);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL5:
+			BeebView_CycleColour(5);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL6:
+			BeebView_CycleColour(6);
+			BeebView_SetBitmapPixels(hWnd);
+			break;
+		case IDM_COL7:
+			BeebView_CycleColour(7);
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_ABOUT:
