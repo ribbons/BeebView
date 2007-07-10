@@ -2,8 +2,6 @@
 
 #include "resource.h"
 
-//#define MAXFILENAME 256 	    // maximum length of file pathname
-
 #define BV_WIDTH  640           // width  of "screen" (client area)
 #define BV_DEFAULT_HEIGHT 512   // default height of "screen" (client area)
 
