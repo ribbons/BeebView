@@ -22,10 +22,10 @@
 
 // Variables
 HBITMAP TheBitmap;
-char szFilterSpec [128] = "BBC Graphics Files (*.BBG)\0*.BBG\0All Files (*.*)\0*.*\0";
+char szFilterSpec [128] = "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0";
 char szFileName[MAX_PATH] = "";
 char szFileTitle[MAX_PATH] = "";
-char szSaveFilterSpec [128] = "Windows Bitmap (*.BMP)\0*.BMP\0All Files (*.*)\0*.*\0";
+char szSaveFilterSpec [128] = "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
 char szSaveFileName[MAX_PATH] = "";
 char szSaveFileTitle[MAX_PATH] = "";
 char szWindowTitle[80];
