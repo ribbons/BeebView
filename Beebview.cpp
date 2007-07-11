@@ -22,10 +22,7 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
-int APIENTRY _tWinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPTSTR    lpCmdLine,
-                     int       nCmdShow)
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
  	MSG msg;
 	HACCEL hAccelTable;
@@ -34,6 +31,44 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDS_APP_TITLE, szAppName, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_BEEBVIEW, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
+
+	// Work through the command line parameters.
+	// This block of code will set szFileName to the last quoted part of the command line, and pick up any other params.
+	char *params;
+	char *context;
+	bool bInQuotes = false;
+
+	params = strtok_s(lpCmdLine, " ", &context);
+
+	while (params != NULL)
+	{
+		if(bInQuotes) {
+			strcat_s(szFileName, " ");
+			strcat_s(szFileName, params);
+			if(params[strlen(params)-1] == '"') {
+				strncpy_s(szFileName, MAX_PATH, szFileName, strlen(szFileName)-1);
+				bInQuotes = false;
+			}
+		} else {
+			if(params[0] == '"') {
+				strcpy_s(szFileName, params+1);
+				bInQuotes = true;
+			}
+		}
+
+		params = strtok_s(NULL, " ", &context);
+	}
+
+	// If szFileName has been set, set szFileTitle to the file title (without extension).
+	if(szFileName != NULL) {
+		char *tempTitle = strrchr(szFileName, '\\') + 1;
+		strcpy_s(szFileTitle, tempTitle);
+		char *pPos = strrchr(szFileTitle, '.');
+
+		if(pPos != NULL) {
+			strncpy_s(szFileTitle, MAX_PATH, szFileTitle, (int)(pPos - szFileTitle));
+		}
+	}
 
 	// Perform application initialization:
 	if (!InitInstance (hInstance, nCmdShow)) 
@@ -173,6 +208,7 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 {
 	BeebView_InitPalette();
 	BeebView_SetBitmapPixels(hWnd);
+
 	return TRUE;
 }
 
@@ -232,7 +268,7 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_SAVEAS:
 			// Set the default file title
-			strcpy(szSaveFileName, szFileTitle);
+			strcpy_s(szSaveFileName, szFileTitle);
 			// Show the save as dialog
 			if(SaveDialog(hWnd, szSaveFilterSpec, szSaveFileName, MAX_PATH, "Save As", szSaveFileTitle, MAX_PATH, "bmp")) {
 				BeebView_SaveBitmap(hWnd);
@@ -400,7 +436,11 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 	// open the file
 	hFileHandle = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
 	if(hFileHandle == INVALID_HANDLE_VALUE) {
-		MessageBox(hWnd, "Failed to open file", "File Error", MB_ICONEXCLAMATION | MB_OK);
+		char fileMessage[50+MAX_PATH];
+		strcpy_s(fileMessage, "There was a problen opening the file '");
+		strcat_s(fileMessage, szFileName);
+		strcat_s(fileMessage, "'.");
+		MessageBox(hWnd, fileMessage, "File Error", MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
