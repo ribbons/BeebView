@@ -414,8 +414,8 @@ COLORREF BeebView_GetColour(int colour)
 void BeebView_CycleColour(int colour)
 {
    pal_bit[colour]++;
-   if(pal_bit[colour] > 7){
-      pal_bit[colour] = 0;
+   if(pal_bit[colour] > 8){
+      pal_bit[colour] = 1;
    }
    palette[colour] = BeebView_GetColour(pal_bit[colour]);
 }
