@@ -60,7 +60,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	}
 
 	// If szFileName has been set, set szFileTitle to the file title (without extension).
-	if(szFileName != NULL) {
+	if(strlen(szFileName) > 0) {
 		char *tempTitle = strrchr(szFileName, '\\') + 1;
 		strcpy_s(szFileTitle, tempTitle);
 		char *pPos = strrchr(szFileTitle, '.');
