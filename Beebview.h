@@ -29,6 +29,7 @@ char szSaveFileTitle[MAX_PATH] = "";
 char szWindowTitle[80];
 int iClientHeight = BV_DEFAULT_HEIGHT;
 int iBBCHeight = BBC_DEFAULT_HEIGHT;
+bool bAutoSave = false;
 
 // Message Handler Functions
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct);

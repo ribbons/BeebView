@@ -53,6 +53,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			if(params[0] == '"') {
 				strcpy_s(szFileName, params+1);
 				bInQuotes = true;
+			} else {
+				if(strcmp(params, "--save") == 0 ) {
+					bAutoSave = true;
+				}
 			}
 		}
 
@@ -208,6 +212,17 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 {
 	BeebView_InitPalette();
 	BeebView_SetBitmapPixels(hWnd);
+
+	// Automatically save the file and exit if bAutoSave is true
+	if(bAutoSave) {
+		// Add .bmp to the loaded file.
+		strcpy_s(szSaveFileName, szFileName);
+		strcat_s(szSaveFileName, ".bmp");
+		BeebView_SaveBitmap(hWnd);
+
+		// Close the program
+		DestroyWindow(hWnd);
+	}
 
 	return TRUE;
 }
