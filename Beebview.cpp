@@ -54,8 +54,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				strcpy_s(szFileName, params+1);
 				bInQuotes = true;
 			} else {
+				// Process other command line params
 				if(strcmp(params, "--save") == 0 ) {
 					bAutoSave = true;
+				} else if(strcmp(params, "--mode0") == 0 ) {
+					nMode = 0;
+				} else if(strcmp(params, "--mode1") == 0 ) {
+					nMode = 1;
+				} else if(strcmp(params, "--mode2") == 0 ) {
+					nMode = 2;
+				} else if(strcmp(params, "--mode4") == 0 ) {
+					nMode = 4;
+				} else if(strcmp(params, "--mode5") == 0 ) {
+					nMode = 5;
 				}
 			}
 		}
