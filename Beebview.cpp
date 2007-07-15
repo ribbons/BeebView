@@ -684,7 +684,7 @@ void BeebView_MakePic04(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlock
             Byte = buffer[i];
             for(bit = 0; bit < 8; bit++) {
                 index = Byte & 1;
-               SetPixel(BitmapDC, nX+8-bit, nY+i, colour[index]);
+               SetPixel(BitmapDC, (nX+7)-bit, nY+i, colour[index]);
                Byte = Byte >> 1;
             }
          }
