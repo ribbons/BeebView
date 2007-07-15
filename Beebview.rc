@@ -96,8 +96,8 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     ICON            IDI_BEEBVIEW,IDC_MYICON,8,9,20,20
-    LTEXT           "David's BBC Micro Graphics File Viewer\n\nDavid Robinson  February 1999\nrevised  April 2000",
-                    IDC_STATIC,41,8,184,38,SS_NOPREFIX
+    LTEXT           "BBC Micro Graphics File Viewer\n\nDavid Robinson  February 1999\nRevised  April 2000\nUpdated July 2007 by Matthew Robinson",
+                    IDC_STATIC,41,8,184,60,SS_NOPREFIX
     DEFPUSHBUTTON   "OK",IDOK,93,58,44,16,WS_GROUP
 END
 
