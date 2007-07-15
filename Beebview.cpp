@@ -10,7 +10,7 @@ HINSTANCE hInst;								// current instance
 TCHAR szAppName[MAX_LOADSTRING];			    // The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
-int nMode = 1;
+int nMode;
 int pal_bit[16];
 COLORREF palette[16];
 
@@ -31,6 +31,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	LoadString(hInstance, IDS_APP_TITLE, szAppName, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_BEEBVIEW, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
+
+	// Set up the palette and default mode
+	BeebView_InitPalette();
+	BeebView_SetMode(1);
 
 	// Work through the command line parameters.
 	// This block of code will set szFileName to the last quoted part of the command line, and pick up any other params.
@@ -58,15 +62,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				if(strcmp(params, "--save") == 0 ) {
 					bAutoSave = true;
 				} else if(strcmp(params, "--mode0") == 0 ) {
-					nMode = 0;
+					BeebView_SetMode(0);
 				} else if(strcmp(params, "--mode1") == 0 ) {
-					nMode = 1;
+					BeebView_SetMode(1);
 				} else if(strcmp(params, "--mode2") == 0 ) {
-					nMode = 2;
+					BeebView_SetMode(2);
 				} else if(strcmp(params, "--mode4") == 0 ) {
-					nMode = 4;
+					BeebView_SetMode(4);
 				} else if(strcmp(params, "--mode5") == 0 ) {
-					nMode = 5;
+					BeebView_SetMode(5);
 				}
 			}
 		}
@@ -221,7 +225,6 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 {
-	BeebView_InitPalette();
 	BeebView_SetBitmapPixels(hWnd);
 
 	// Automatically save the file and exit if bAutoSave is true
@@ -304,23 +307,23 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			DestroyWindow(hWnd);
 			break;
 		case IDM_MODE0:
-			nMode = 0;
+			BeebView_SetMode(0);
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_MODE1:
-			nMode = 1;
+			BeebView_SetMode(1);
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_MODE2:
-			nMode = 2;
+			BeebView_SetMode(2);
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_MODE4:
-			nMode = 4;
+			BeebView_SetMode(4);
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_MODE5:
-			nMode = 5;
+			BeebView_SetMode(5);
 			BeebView_SetBitmapPixels(hWnd);
 			break;
 		case IDM_COL0:
@@ -432,7 +435,64 @@ void BeebView_InitPalette(void)
 
 COLORREF BeebView_GetColour(int colour)
 {
-   return(RGB((pal_bit[colour] & 1) * 255, ((pal_bit[colour] / 2) & 1) * 255, ((pal_bit[colour] / 4) & 1) * 255));
+	switch(colour) {
+		case 0:
+			return RGB(0, 0, 0);
+			break;
+		case 1:
+			return RGB(255, 0, 0);
+			break;
+		case 2:
+			return RGB(0, 255, 0);
+			break;
+		case 3:
+			return RGB(255, 255, 0);
+			break;
+		case 4:
+			return RGB(0, 0, 255);
+			break;
+		case 5:
+			return RGB(255, 0, 255);
+			break;
+		case 6:
+			return RGB(0, 255, 255);
+			break;
+		case 7:
+			return RGB(255, 255, 255);
+			break;
+		default:
+			return RGB(0, 0, 0);
+	}
+}
+
+// Change mode, and set the correct default colours for the mode.
+
+void BeebView_SetMode(int mode) {
+	nMode = mode;
+
+	switch(mode) {
+		case 0:
+		case 4:
+			pal_bit[0] = 0;
+			pal_bit[7] = 7;
+			break;
+		case 1:
+		case 5:
+			pal_bit[0] = 0;
+			pal_bit[1] = 1;
+			pal_bit[2] = 3;
+			pal_bit[3] = 7;
+			break;
+		case 2:
+			for (int i = 0; i < 8; i++) {
+				pal_bit[i] = i;
+			}
+			break;
+	}
+
+	for (int i = 0; i < 8; i++) {
+		palette[i] = BeebView_GetColour(pal_bit[i]);
+	}
 }
 
 /* Cycle the colour palette */
@@ -440,8 +500,8 @@ COLORREF BeebView_GetColour(int colour)
 void BeebView_CycleColour(int colour)
 {
    pal_bit[colour]++;
-   if(pal_bit[colour] > 8){
-      pal_bit[colour] = 1;
+   if(pal_bit[colour] > 7){
+      pal_bit[colour] = 0;
    }
    palette[colour] = BeebView_GetColour(pal_bit[colour]);
 }

@@ -42,6 +42,7 @@ void BeebView_OnDestroy(HWND hWnd);
 void BeebView_UpdateTitle(HWND);
 void BeebView_InitPalette(void);
 COLORREF BeebView_GetColour(int);
+void BeebView_SetMode(int);
 void BeebView_CycleColour(int);
 void BeebView_SetBitmapPixels(HWND);
 int  BeebView_Width(HWND, int);
