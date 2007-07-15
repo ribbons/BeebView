@@ -496,6 +496,19 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 			MessageBox(hWnd, "Invalid screen mode!", "Program Error", MB_ICONASTERISK | MB_OK);
 	}
 
+	if(iBlockRows == 0) {
+		// The file doesn't have even one row of blocks
+		char tooSmallMessage[50+MAX_PATH];
+		strcpy_s(tooSmallMessage, "The file '");
+		strcat_s(tooSmallMessage, szFileName);
+		strcat_s(tooSmallMessage, "' is too small to be a BBC graphics file.");
+		MessageBox(hWnd, tooSmallMessage, "File Error", MB_ICONEXCLAMATION | MB_OK);
+
+		// Close the file & abandon loading.
+		CloseHandle(hFileHandle);
+		return;
+	}
+
 	// Calculate how tall the image is based on the number of rows of blocks.
 	iBBCHeight = iBlockRows * BYTES;
 	iClientHeight = iBBCHeight * 2;
