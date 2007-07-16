@@ -56,7 +56,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		} else {
 			if(params[0] == '"') {
 				strcpy_s(szFileName, params+1);
-				bInQuotes = true;
+				if(params[strlen(params)-1] == '"') {
+					strncpy_s(szFileName, MAX_PATH, szFileName, strlen(szFileName)-1);
+				} else {
+					bInQuotes = true;
+				}
 			} else {
 				// Process other command line params
 				if(strcmp(params, "--save") == 0 ) {
