@@ -11,6 +11,8 @@
 #include <windows.h>
 // Strict macro and message crackers etc
 #include <windowsx.h>
+// Shell Functions etc
+#include <shellapi.h>
 // Common Dialogs
 #include <commdlg.h>
 // C RunTime Header Files

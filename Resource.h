@@ -2,15 +2,18 @@
 // Microsoft Visual C++ generated include file.
 // Used by Beebview.rc
 //
-#define IDC_MYICON                      2
 #define IDD_BEEBVIEW_DIALOG             102
 #define IDS_APP_TITLE                   103
-#define IDD_ABOUTBOX                    103
-#define IDM_ABOUT                       104
-#define IDM_EXIT                        105
-#define IDI_BEEBVIEW                    107
-#define IDI_SMALL                       108
-#define IDC_BEEBVIEW                    109
+#define IDS_LICENSETEXT                 104
+#define IDD_ABOUTBOX                    105
+#define IDM_ABOUT                       106
+#define IDM_EXIT                        107
+#define IDI_BEEBVIEW                    108
+#define IDI_SMALL                       109
+#define IDB_ABOUT                       110
+#define IDC_LICENSE                     111
+#define IDC_URL                         112
+#define IDC_BEEBVIEW                    113
 #define IDR_MAINFRAME                   128
 #define IDM_OPEN                        32786
 #define IDM_MODE0                       32787

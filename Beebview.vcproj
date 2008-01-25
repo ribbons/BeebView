@@ -229,7 +229,11 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\Beebview.ico"
+				RelativePath=".\Graphics\BeebView 64.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics\Beebview.ico"
 				>
 			</File>
 			<File
@@ -237,7 +241,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\small.ico"
+				RelativePath=".\Graphics\small.ico"
 				>
 			</File>
 		</Filter>
