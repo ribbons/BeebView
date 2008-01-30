@@ -335,6 +335,29 @@ void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMen
 			EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
 			break;
 	}
+	
+	// Set a radio check next to the menu item for the current mode.
+	UINT iCheckMode;
+	
+	switch(nMode) {
+		case 0:
+			iCheckMode=IDM_MODE0;
+			break;
+		case 1:
+			iCheckMode=IDM_MODE1;
+			break;
+		case 2:
+			iCheckMode=IDM_MODE2;
+			break;
+		case 4:
+			iCheckMode=IDM_MODE4;
+			break;
+		case 5:
+			iCheckMode=IDM_MODE5;
+			break;
+	}
+	
+	CheckMenuRadioItem(hMenu, IDM_MODE0, IDM_MODE5, iCheckMode, MF_BYCOMMAND);
 }
 
 void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
