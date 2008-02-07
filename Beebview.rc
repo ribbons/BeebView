@@ -10,7 +10,7 @@
   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
   License for more details.
  
- You should have received a copy of the GNU General Public License along with this program; if not, write
+  You should have received a copy of the GNU General Public License along with this program; if not, write
   to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 **************************************************************************************************************/
 
@@ -128,6 +128,40 @@ BEGIN
 	IDS_APP_TITLE           "BBC Graphics Viewer"
 	IDS_LICENSETEXT         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.\r\n\r\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\r\n\r\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA."
 END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version Info
+//
+
+1 VERSIONINFO
+FILEVERSION 1,1,0,0
+PRODUCTVERSION 1,1,0,0
+FILEOS 0x4
+FILETYPE 0x1
+{
+BLOCK "StringFileInfo"
+{
+	BLOCK "000004b0"
+	{
+		VALUE "Comments", "Utility to view and save graphics files originally created on BBC Micro or Master Computers."
+		VALUE "CompanyName", "www.nerdoftheherd.com"
+		VALUE "FileDescription", "BBC Graphics Viewer"
+		VALUE "FileVersion", "0.4.7.16836"
+		VALUE "InternalName", "Beebview.exe"
+		VALUE "LegalCopyright", "Copyright © 2008"
+		VALUE "OriginalFilename", "Beebview.exe"
+		VALUE "ProductName", "BBC Graphics Viewer"
+		VALUE "ProductVersion", "1.1"
+		VALUE "Assembly Version", "1.1"
+	}
+}
+
+BLOCK "VarFileInfo"
+{
+	VALUE "Translation", 0x0000 0x04B0
+}
+}
 
 #endif    // English (U.K.) resources
 /////////////////////////////////////////////////////////////////////////////
