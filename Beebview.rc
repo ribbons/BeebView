@@ -79,8 +79,9 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "Online &Help",                IDM_HELP
+		MENUITEM "&Report a Bug",               IDM_REPORTBUG
         MENUITEM SEPARATOR
-        MENUITEM "&About...",                   IDM_ABOUT
+        MENUITEM "&About",                      IDM_ABOUT
     END
 END
 
