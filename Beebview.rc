@@ -1,6 +1,6 @@
 /**************************************************************************************************************
   Utility to display BBC Micro / Master Graphics Files.
-  Copyright © 2008  www.nerdoftheherd.com
+  Copyright © 2008 Matt Robinson, © 2003 David Robinson
  
   This program is free software; you can redistribute it and/or modify it under the terms of the GNU General
   Public License as published by the Free Software Foundation; either version 2 of the License, or (at your
@@ -110,7 +110,7 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     CONTROL         IDB_ABOUT, IDC_STATIC, STATIC, SS_BITMAP | WS_CHILD | WS_VISIBLE, 8, 9, 0, 0
     LTEXT           "BBC Graphics Viewer 1.1" IDC_STATIC, 57, 12, 184, 10, SS_NOPREFIX
-    LTEXT           "Copyright © 2008" IDC_STATIC, 57, 25, 184, 10, SS_NOPREFIX
+    LTEXT           "Copyright © 2008 Matt Robinson, © 2003 David Robinson" IDC_STATIC, 57, 25, 224, 10, SS_NOPREFIX
     LTEXT           "http://www.nerdoftheherd.com/tools/beebview/" IDC_URL, 57, 38, 155, 9, SS_NOPREFIX | SS_NOTIFY
     LTEXT           "License:", IDC_STATIC, 10, 56, 184, 9, SS_NOPREFIX
     DEFPUSHBUTTON   "OK", IDOK, 279, 157, 56, 16, WS_GROUP
@@ -147,9 +147,9 @@ BLOCK "StringFileInfo"
 		VALUE "Comments", "Utility to view and save graphics files originally created on BBC Micro or Master Computers."
 		VALUE "CompanyName", "www.nerdoftheherd.com"
 		VALUE "FileDescription", "BBC Graphics Viewer"
-		VALUE "FileVersion", "0.4.7.16836"
+		VALUE "FileVersion", "1.1"
 		VALUE "InternalName", "Beebview.exe"
-		VALUE "LegalCopyright", "Copyright © 2008"
+		VALUE "LegalCopyright", "Copyright © 2008 Matt Robinson, © 2003 David Robinson"
 		VALUE "OriginalFilename", "Beebview.exe"
 		VALUE "ProductName", "BBC Graphics Viewer"
 		VALUE "ProductVersion", "1.1"
