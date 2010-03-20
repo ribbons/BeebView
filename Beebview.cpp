@@ -16,6 +16,7 @@
 
 #include "stdafx.h"
 #include "Beebview.h"
+#include "BbcScreen.h"
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -23,11 +24,16 @@ HINSTANCE hInst;								// current instance
 TCHAR szAppName[MAX_LOADSTRING];			    // The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
-int nMode;
-int pal_bit[16];
-COLORREF palette[16];
+BbcScreen *screen;
 
-OFSTRUCT of;
+char szFilterSpec [128] = "BBC Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0";
+char szFileName[MAX_PATH] = "";
+char szFileTitle[MAX_PATH] = "";
+char szSaveFilterSpec [128] = "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
+char szSaveFileName[MAX_PATH] = "";
+char szSaveFileTitle[MAX_PATH] = "";
+char szWindowTitle[80];
+bool bAutoSave = false;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -44,10 +50,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	LoadString(hInstance, IDS_APP_TITLE, szAppName, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_BEEBVIEW, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
-
-	// Set up the palette and default mode
-	BeebView_InitPalette();
-	BeebView_SetMode(1);
 
 	// Work through the command line parameters.
 	// This block of code will set szFileName to the last quoted part of the command line, and pick up any other params.
@@ -76,7 +78,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				}
 			} else {
 				// Process other command line params
-				if(strcmp(params, "--save") == 0 ) {
+				/* if(strcmp(params, "--save") == 0 ) {
 					bAutoSave = true;
 				} else if(strcmp(params, "--mode0") == 0 ) {
 					BeebView_SetMode(0);
@@ -88,7 +90,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 					BeebView_SetMode(4);
 				} else if(strcmp(params, "--mode5") == 0 ) {
 					BeebView_SetMode(5);
-				}
+				} */
 			}
 		}
 
@@ -276,10 +278,10 @@ LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 {
-	BeebView_SetBitmapPixels(hWnd);
+	//BeebView_SetBitmapPixels(hWnd);
 
 	// Automatically save the file and exit if bAutoSave is true
-	if(bAutoSave) {
+	/* if(bAutoSave) {
 		// Add .bmp to the loaded file.
 		strcpy_s(szSaveFileName, szFileName);
 		strcat_s(szSaveFileName, ".bmp");
@@ -287,77 +289,100 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 
 		// Close the program
 		DestroyWindow(hWnd);
-	}
+	} */
 
 	return TRUE;
 }
 
 void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu)
 {
-	// Disable Save As... if no image is loaded
-	if(strlen(szFileName) > 0) {
-		EnableMenuItem(hMenu, IDM_SAVEAS, MF_ENABLED);
-	} else {
+	if(screen == NULL)
+	{
+		// Gray out the menu options as no image is loaded
 		EnableMenuItem(hMenu, IDM_SAVEAS, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_MODE0, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_MODE1, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_MODE2, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_MODE4, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_MODE5, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL0, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL1, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL2, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL3, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
+		EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
 	}
+	else
+	{
+		// Enable the Save As and Mode selection
+		EnableMenuItem(hMenu, IDM_SAVEAS, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_MODE0, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_MODE1, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_MODE2, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_MODE4, MF_ENABLED);
+		EnableMenuItem(hMenu, IDM_MODE5, MF_ENABLED);
 
-	switch(nMode) {
-		case 0:
-		case 4:
-			EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL1, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL2, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL3, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL4, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL5, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL6, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
-			break;
-		case 1:
-		case 5:
-			EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL4, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL5, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL6, MF_DISABLED);
-			EnableMenuItem(hMenu, IDM_COL7, MF_DISABLED);
-			break;
-		case 2:
-			EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL4, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL5, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL6, MF_ENABLED);
-			EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
-			break;
+		// Set a radio check next to the menu item for the current mode.
+		UINT checkItem;
+
+		switch(screen->getMode())
+		{
+			case 0:
+				checkItem = IDM_MODE0;
+				break;
+			case 1:
+				checkItem = IDM_MODE1;
+				break;
+			case 2:
+				checkItem = IDM_MODE2;
+				break;
+			case 4:
+				checkItem = IDM_MODE4;
+				break;
+			case 5:
+				checkItem = IDM_MODE5;
+				break;
+		} 
+		
+		CheckMenuRadioItem(hMenu, IDM_MODE0, IDM_MODE5, checkItem, MF_BYCOMMAND);
+
+		// Enable the applicable colour cycle options for the current mode
+		EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
+
+		switch(screen->getMode()) {
+			case 0:
+			case 4:
+				EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL2, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL3, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
+				break;
+			case 1:
+			case 5:
+				EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
+				EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
+				break;
+			case 2:
+				EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL4, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL5, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL6, MF_ENABLED);
+				EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
+				break;
+		}
 	}
-	
-	// Set a radio check next to the menu item for the current mode.
-	UINT iCheckMode;
-	
-	switch(nMode) {
-		case 0:
-			iCheckMode=IDM_MODE0;
-			break;
-		case 1:
-			iCheckMode=IDM_MODE1;
-			break;
-		case 2:
-			iCheckMode=IDM_MODE2;
-			break;
-		case 4:
-			iCheckMode=IDM_MODE4;
-			break;
-		case 5:
-			iCheckMode=IDM_MODE5;
-			break;
-	}
-	
-	CheckMenuRadioItem(hMenu, IDM_MODE0, IDM_MODE5, iCheckMode, MF_BYCOMMAND);
 }
 
 void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
@@ -367,7 +392,7 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 	{
 		case IDM_OPEN:
 			OpenDialog(hWnd, szFilterSpec, szFileName, MAX_PATH, "Open file", szFileTitle, MAX_PATH);
-			BeebView_SetBitmapPixels(hWnd);
+			BeebView_LoadFile(hWnd);
 			break;
 		case IDM_SAVEAS:
 			// Set the default file title
@@ -381,56 +406,56 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			DestroyWindow(hWnd);
 			break;
 		case IDM_MODE0:
-			BeebView_SetMode(0);
-			BeebView_SetBitmapPixels(hWnd);
+			screen->setMode(0);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_MODE1:
-			BeebView_SetMode(1);
-			BeebView_SetBitmapPixels(hWnd);
+			screen->setMode(1);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_MODE2:
-			BeebView_SetMode(2);
-			BeebView_SetBitmapPixels(hWnd);
+			screen->setMode(2);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_MODE4:
-			BeebView_SetMode(4);
-			BeebView_SetBitmapPixels(hWnd);
+			screen->setMode(4);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_MODE5:
-			BeebView_SetMode(5);
-			BeebView_SetBitmapPixels(hWnd);
+			screen->setMode(5);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL0:
 			BeebView_CycleColour(0);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL1:
 			BeebView_CycleColour(1);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL2:
 			BeebView_CycleColour(2);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL3:
 			BeebView_CycleColour(3);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL4:
 			BeebView_CycleColour(4);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL5:
 			BeebView_CycleColour(5);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL6:
 			BeebView_CycleColour(6);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_COL7:
 			BeebView_CycleColour(7);
-			BeebView_SetBitmapPixels(hWnd);
+			InvalidateRect(hWnd, NULL, TRUE); // Repaint
 			break;
 		case IDM_HELP:
 			ShellExecute(NULL, "open", "http://www.nerdoftheherd.com/tools/beebview/help/", NULL, NULL, SW_SHOWNORMAL);
@@ -447,24 +472,27 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 void BeebView_OnPaint(HWND hWnd)
 {
 	PAINTSTRUCT PaintStruct;
-	int nWidth = BeebView_Width(hWnd, nMode);
 
 	// begin paint & get the handle of the screen DC
 	HDC ScreenDC = BeginPaint(hWnd, &PaintStruct);
 
-	// create a DC for the bitmap (it already exists)
-	HDC BitmapDC = CreateCompatibleDC(ScreenDC);
+	if(screen != NULL)
+	{
+		// create a DC for the bitmap (it already exists)
+		HDC BitmapDC = CreateCompatibleDC(ScreenDC);
+		
+		// save handle of current bitmap & select bitmap
+		HBITMAP OldBitmap = SelectBitmap(BitmapDC, screen->generateBitmap(hWnd));
 
-	// save handle of current bitmap & select bitmap
-	HBITMAP OldBitmap = SelectBitmap(BitmapDC, TheBitmap);
+		// paint the bitmap
+		StretchBlt(ScreenDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), BitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
 
-	// paint the bitmap
-	StretchBlt(ScreenDC, 0, 0, BV_WIDTH, iClientHeight, BitmapDC, 0, 0, nWidth, iBBCHeight, SRCCOPY);
+		// select previous bitmap
+		SelectBitmap(BitmapDC, OldBitmap);
 
-	// select previous bitmap
-	SelectBitmap(BitmapDC, OldBitmap);
-	// release DC
-	DeleteDC(BitmapDC);
+		// release DC
+		DeleteDC(BitmapDC);
+	}
 
 	EndPaint(hWnd, &PaintStruct);
 }
@@ -472,7 +500,7 @@ void BeebView_OnPaint(HWND hWnd)
 void BeebView_OnDestroy(HWND hWnd)
 {
 	// delete bitmap from memory
-	DeleteBitmap(TheBitmap);
+	//DeleteBitmap(TheBitmap);
 
 	PostQuitMessage(0);
 }
@@ -488,116 +516,38 @@ void BeebView_UpdateTitle(HWND hWnd)
    lstrcat(szWindowTitle, " - ");
    lstrcat(szWindowTitle, szFileTitle);
    lstrcat(szWindowTitle, "  [MODE");
-   _itoa_s(nMode, szMode, 10);
+   //_itoa_s(nMode, szMode, 10);
    lstrcat(szWindowTitle, szMode);
    lstrcat(szWindowTitle, "]");
    SetWindowText(hWnd, szWindowTitle);
 }
 
-/* Initialise the palette */
-
-void BeebView_InitPalette(void)
-{
-   int i;
-
-// colour values 0 to 7 as (index * 255)
-   for (i = 0; i < 8; i++) {
-      pal_bit[i] = i;
-      palette[i] = BeebView_GetColour(pal_bit[i]);
-   }
-// 'flashing' colours to grey
-   for (i = 8; i < 16; i++) {
-      palette[i] = RGB(128, 128, 128);
-   }
-}
-
-/* Generate a colour value */
-
-COLORREF BeebView_GetColour(int colour)
-{
-	switch(colour) {
-		case 0:
-			return RGB(0, 0, 0);
-			break;
-		case 1:
-			return RGB(255, 0, 0);
-			break;
-		case 2:
-			return RGB(0, 255, 0);
-			break;
-		case 3:
-			return RGB(255, 255, 0);
-			break;
-		case 4:
-			return RGB(0, 0, 255);
-			break;
-		case 5:
-			return RGB(255, 0, 255);
-			break;
-		case 6:
-			return RGB(0, 255, 255);
-			break;
-		case 7:
-			return RGB(255, 255, 255);
-			break;
-		default:
-			return RGB(0, 0, 0);
-	}
-}
-
-// Change mode, and set the correct default colours for the mode.
-
-void BeebView_SetMode(int mode) {
-	nMode = mode;
-
-	switch(mode) {
-		case 0:
-		case 4:
-			pal_bit[0] = 0;
-			pal_bit[7] = 7;
-			break;
-		case 1:
-		case 5:
-			pal_bit[0] = 0;
-			pal_bit[1] = 1;
-			pal_bit[2] = 3;
-			pal_bit[3] = 7;
-			break;
-		case 2:
-			for (int i = 0; i < 8; i++) {
-				pal_bit[i] = i;
-			}
-			break;
-	}
-
-	for (int i = 0; i < 8; i++) {
-		palette[i] = BeebView_GetColour(pal_bit[i]);
-	}
-}
-
-/* Cycle the colour palette */
-
+// Cycle a colour in the palette
 void BeebView_CycleColour(int colour)
 {
-   pal_bit[colour]++;
-   if(pal_bit[colour] > 7){
-      pal_bit[colour] = 0;
-   }
-   palette[colour] = BeebView_GetColour(pal_bit[colour]);
+	screen->setColour(colour, (screen->getColour(colour) + 1) % 8);
 }
 
-/* Open the file, create the bitmap and display it */
-
-void BeebView_SetBitmapPixels(HWND hWnd)
+void BeebView_LoadFile(HWND hWnd)
 {
-	HANDLE hFileHandle;
-	int nWidth = BeebView_Width(hWnd, nMode);
-
+	// update the window title bar
+	BeebView_UpdateTitle(hWnd);
+	
 	// check for empty filename string
 	if(strlen(szFileName) == 0) {
 		BeebView_UpdateTitle(hWnd);
 		return;
 	}
+
+	BeebView_LoadMemDump(hWnd);
+
+	// invalidate the client area to force a repaint
+	InvalidateRect(hWnd, NULL, TRUE);
+}
+
+void BeebView_LoadMemDump(HWND hWnd)
+{
+	HANDLE hFileHandle;
 
 	// open the file
 	hFileHandle = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
@@ -610,250 +560,34 @@ void BeebView_SetBitmapPixels(HWND hWnd)
 		return;
 	}
 
-	// Work out how many rows of blocks there are in this file.
-	int iFileSize = GetFileSize(hFileHandle, NULL);
-	int iBlocksInFile = iFileSize / BYTES;
-	int iBlockRows;
+	// Initialise a new BbcScreen instance to store the data in
+	int fileSize = GetFileSize(hFileHandle, NULL);
+	screen = new BbcScreen(fileSize);
 
-	switch(nMode)
+	DWORD bytesRead = 0;
+	int writeAddr = 0;
+	unsigned char buffer[READBUF];
+
+	do
 	{
-		case 0:
-			iBlockRows = iBlocksInFile / BBC_XBLKS0;
-			break;
-		case 1:
-			iBlockRows = iBlocksInFile / BBC_XBLKS1;
-			break;
-		case 2:
-			iBlockRows = iBlocksInFile / BBC_XBLKS2;
-			break;
-		case 4:
-			iBlockRows = iBlocksInFile / BBC_XBLKS4;
-			break;
-		case 5:
-			iBlockRows = iBlocksInFile / BBC_XBLKS5;
-			break;
-		default:
-			MessageBox(hWnd, "Invalid screen mode!", "Program Error", MB_ICONASTERISK | MB_OK);
-	}
+		ReadFile(hFileHandle, &buffer, READBUF, &bytesRead, NULL);
 
-	if(iBlockRows == 0) {
-		// The file doesn't have even one row of blocks
-		char tooSmallMessage[50+MAX_PATH];
-		strcpy_s(tooSmallMessage, "The file '");
-		strcat_s(tooSmallMessage, szFileName);
-		strcat_s(tooSmallMessage, "' is too small to be a BBC graphics file.");
-		MessageBox(hWnd, tooSmallMessage, "File Error", MB_ICONEXCLAMATION | MB_OK);
+		for(unsigned int xfer = 0; xfer < bytesRead; xfer++)
+		{
+			screen->setScreenBit(writeAddr, buffer[xfer]);
+			writeAddr++;
+		}
+	} while(bytesRead > 0);
 
-		// Close the file & abandon loading.
-		CloseHandle(hFileHandle);
-		return;
-	}
-
-	// Calculate how tall the image is based on the number of rows of blocks.
-	iBBCHeight = iBlockRows * BYTES;
-	iClientHeight = iBBCHeight * 2;
-
-	// update the window title bar
-	BeebView_UpdateTitle(hWnd);
-
-	// delete the old bitmap
-	DeleteBitmap(TheBitmap);
-
-	// get the handle of the screen DC
-	HDC ScreenDC = GetDC(hWnd);
-
-	// create a bitmap, compatible with the screen
-	TheBitmap = CreateCompatibleBitmap(ScreenDC, nWidth, iBBCHeight);
-
-	// create a DC for it
-	HDC BitmapDC = CreateCompatibleDC(ScreenDC);
-
-	// release the screen DC
-	ReleaseDC(hWnd, ScreenDC);
-
-	// save handle of old bitmap & select new bitmap
-	HBITMAP OldBitmap = SelectBitmap(BitmapDC, TheBitmap);
-
-	// set pixels
-	switch(nMode)
-	{
-		case 0:
-		case 4:
-			BeebView_MakePic04(hWnd, hFileHandle, BitmapDC, iBlockRows);
-			break;
-		case 1:
-		case 5:
-			BeebView_MakePic15(hWnd, hFileHandle, BitmapDC, iBlockRows);
-			break;
-		case 2:
-			BeebView_MakePic2(hWnd, hFileHandle, BitmapDC, iBlockRows);
-			break;
-	}
 	// close the file
 	CloseHandle(hFileHandle);
 
-	// select previous bitmap
-	SelectBitmap(BitmapDC, OldBitmap);
-
-	// release bitmap DC
-	DeleteDC(BitmapDC);
-
 	// Resize the window
-	SetWindowPos (hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(iClientHeight), SWP_NOMOVE | SWP_NOZORDER);
-
-	// invalidate the client area to force a repaint
-	InvalidateRect(hWnd, NULL, TRUE);
-}
-
-/* calculate the BBC screen width appropriate to the screen mode */
-
-int BeebView_Width(HWND hWnd, int mode)
-{
-   switch(mode)
-   {
-   case 0:
-   	return(BBC_WIDTH0);
-
-   case 1:
-   	return(BBC_WIDTH1);
-
-   case 2:
-   	return(BBC_WIDTH2);
-
-   case 4:
-   	return(BBC_WIDTH4);
-
-   case 5:
-   	return(BBC_WIDTH5);
-
-   default:
-      MessageBox(hWnd, "Invalid screen mode!", "Program Error", MB_ICONASTERISK | MB_OK);
-		return(0);
-   }
-}
-
-/* MODE 0 or MODE 4 picture */
-
-void BeebView_MakePic04(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks)
-{
-   int bit, i, j, k;
-   unsigned int Byte;
-   unsigned int index;
-   COLORREF colour[2];
-   DWORD bytesRead;
-   int nX = 0;
-   int nY = 0;
-   char buffer[8];
-   int nBlocks = BBC_XBLKS0;
-   
-   if(nMode == 4) {
-      nBlocks = BBC_XBLKS4;
-   }
-
-   colour[0] = palette[0];
-   colour[1] = palette[7];
-
-   for(k = 0; k < iYBlocks; k++) {
-      for(j = 0; j < nBlocks; j++) {
-		 ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
-         if(bytesRead < BYTES) {
-            MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-			return;
-		 }
-         for(i = 0; i < BYTES; i++) {
-            Byte = buffer[i];
-            for(bit = 0; bit < 8; bit++) {
-                index = Byte & 1;
-               SetPixel(BitmapDC, (nX+7)-bit, nY+i, colour[index]);
-               Byte = Byte >> 1;
-            }
-         }
-         nX = nX + 8;
-      }
-   nX = 0;
-   nY = nY + 8;
-   }
-}
-
-/* MODE 1 or MODE 5 picture */
-
-void BeebView_MakePic15(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks)
-{
-   int i, j, k;
-   unsigned int Byte;
-   unsigned int index;
-   DWORD bytesRead;
-   int nX = 0;
-   int nY = 0;
-   char buffer[8];
-   int nBlocks = BBC_XBLKS1;
-
-   if(nMode > 3) {
-      nBlocks = BBC_XBLKS5;
-   }
-
-   for(k = 0; k < iYBlocks; k++) {
-      for(j = 0; j < nBlocks; j++) {
-	     ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
-         if(bytesRead < BYTES) {
-            MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-            return;
-         }
-         for(i = 0; i < BYTES; i++) {
-				Byte = buffer[i];
-				index = ((Byte >> 6) & 2) | ((Byte >> 3) & 1);
-				SetPixel(BitmapDC, nX, nY+i, palette[index]);
-				index = ((Byte >> 5) & 2) | ((Byte >> 2) & 1);
-				SetPixel(BitmapDC, nX+1, nY+i, palette[index]);
-				index = ((Byte >> 4) & 2) | ((Byte >> 1) & 1);
-				SetPixel(BitmapDC, nX+2, nY+i, palette[index]);
-				index = ((Byte >> 3) & 2) | (Byte  & 1);
-				SetPixel(BitmapDC, nX+3, nY+i, palette[index]);
-			}
-			nX = nX + 4;
-		}
-		nX = 0;
-      nY = nY + 8;
-	}
-}
-
-/* MODE 2 picture */
-
-void BeebView_MakePic2(HWND hWnd, HANDLE hFileHandle, HDC BitmapDC, int iYBlocks)
-{
-   int i, j, k;
-   unsigned int Byte;
-   unsigned int index;
-   DWORD bytesRead;
-   int nX = 0;
-   int nY = 0;
-   char buffer[8];
-   int nBlocks = BBC_XBLKS2;
-
-// set colours
-   for(k = 0; k < iYBlocks; k++) {
-      for(j = 0; j < nBlocks; j++) {
-	     ReadFile(hFileHandle, &buffer, BYTES, &bytesRead, NULL);
-         if(bytesRead < BYTES) {
-            MessageBox(hWnd, "Out of data", "File Error", MB_ICONEXCLAMATION | MB_OK);
-            return;
-         }
-         for(i = 0; i < BYTES; i++) {
-            Byte = buffer[i];
-            index = ((Byte >> 4) & 8) | ((Byte >> 3) & 4) | ((Byte >> 2) & 2) | ((Byte >> 1) & 1);
-            SetPixel(BitmapDC, nX, nY+i, palette[index]);
-            index = ((Byte >> 3) & 8) | ((Byte >> 2) & 4) | ((Byte >> 1) & 2) | (Byte  & 1);
-            SetPixel(BitmapDC, nX+1, nY+i, palette[index]);
-         }
-         nX = nX + 2;
-      }
-      nX = 0;
-      nY = nY + 8;
-   }
+	SetWindowPos(hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(dispHeight(screen->getScreenHeight())), SWP_NOMOVE | SWP_NOZORDER);
 }
 
 void BeebView_SaveBitmap(HWND hWnd) {
-	int nWidth = BeebView_Width(hWnd, nMode);
+	/* int nWidth = BeebView_Width(hWnd, nMode);
 
 	// get the handle of the screen DC
 	HDC ScreenDC = GetDC(hWnd);
@@ -885,7 +619,12 @@ void BeebView_SaveBitmap(HWND hWnd) {
 	DeleteDC(SizedDC);
 
 	// release the screen DC
-	ReleaseDC(hWnd, ScreenDC);
+	ReleaseDC(hWnd, ScreenDC); */
+}
+
+int dispHeight(int bbcHeight)
+{
+	return bbcHeight * 2;
 }
 
 // Utility Functions -------------------------------------------------------------------------------
