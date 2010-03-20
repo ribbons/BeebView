@@ -32,7 +32,6 @@ char szFileTitle[MAX_PATH] = "";
 char szSaveFilterSpec [128] = "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
 char szSaveFileName[MAX_PATH] = "";
 char szSaveFileTitle[MAX_PATH] = "";
-char szWindowTitle[80];
 bool bAutoSave = false;
 
 // Forward declarations of functions included in this code module:
@@ -507,21 +506,6 @@ void BeebView_OnDestroy(HWND hWnd)
 
 // BeebView Code -----------------------------------------------------------------------------------
 
-/* Update Window title with filename */
-
-void BeebView_UpdateTitle(HWND hWnd)
-{
-   char szMode[2] = "";
-   lstrcpy(szWindowTitle, szAppName);
-   lstrcat(szWindowTitle, " - ");
-   lstrcat(szWindowTitle, szFileTitle);
-   lstrcat(szWindowTitle, "  [MODE");
-   //_itoa_s(nMode, szMode, 10);
-   lstrcat(szWindowTitle, szMode);
-   lstrcat(szWindowTitle, "]");
-   SetWindowText(hWnd, szWindowTitle);
-}
-
 // Cycle a colour in the palette
 void BeebView_CycleColour(int colour)
 {
@@ -530,15 +514,20 @@ void BeebView_CycleColour(int colour)
 
 void BeebView_LoadFile(HWND hWnd)
 {
-	// update the window title bar
-	BeebView_UpdateTitle(hWnd);
-	
 	// check for empty filename string
 	if(strlen(szFileName) == 0) {
 		return;
 	}
 
 	BeebView_LoadMemDump(hWnd);
+
+	// Update the window title bar
+	int titleLen = strlen(szAppName) + 14 + strlen(szFileTitle);
+	char *windowTitle = new char[titleLen];
+	sprintf_s(windowTitle, titleLen, "%s - %s  [MODE %d]", szAppName, szFileTitle, screen->getMode());
+	SetWindowText(hWnd, windowTitle);
+	delete []windowTitle;
+	
 	BeebView_ForceRepaint(hWnd);
 }
 
