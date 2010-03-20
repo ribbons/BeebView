@@ -407,55 +407,55 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_MODE0:
 			screen->setMode(0);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_MODE1:
 			screen->setMode(1);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_MODE2:
 			screen->setMode(2);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_MODE4:
 			screen->setMode(4);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_MODE5:
 			screen->setMode(5);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL0:
 			BeebView_CycleColour(0);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL1:
 			BeebView_CycleColour(1);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL2:
 			BeebView_CycleColour(2);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL3:
 			BeebView_CycleColour(3);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL4:
 			BeebView_CycleColour(4);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL5:
 			BeebView_CycleColour(5);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL6:
 			BeebView_CycleColour(6);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_COL7:
 			BeebView_CycleColour(7);
-			InvalidateRect(hWnd, NULL, TRUE); // Repaint
+			BeebView_ForceRepaint(hWnd);
 			break;
 		case IDM_HELP:
 			ShellExecute(NULL, "open", "http://www.nerdoftheherd.com/tools/beebview/help/", NULL, NULL, SW_SHOWNORMAL);
@@ -482,7 +482,7 @@ void BeebView_OnPaint(HWND hWnd)
 		HDC BitmapDC = CreateCompatibleDC(ScreenDC);
 		
 		// save handle of current bitmap & select bitmap
-		HBITMAP OldBitmap = SelectBitmap(BitmapDC, screen->generateBitmap(hWnd));
+		HBITMAP OldBitmap = SelectBitmap(BitmapDC, screen->getBitmap());
 
 		// paint the bitmap
 		StretchBlt(ScreenDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), BitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
@@ -535,13 +535,18 @@ void BeebView_LoadFile(HWND hWnd)
 	
 	// check for empty filename string
 	if(strlen(szFileName) == 0) {
-		BeebView_UpdateTitle(hWnd);
 		return;
 	}
 
 	BeebView_LoadMemDump(hWnd);
+	BeebView_ForceRepaint(hWnd);
+}
 
-	// invalidate the client area to force a repaint
+void BeebView_ForceRepaint(HWND hWnd)
+{
+	screen->generateBitmap(hWnd);
+
+	// Invalidate the client area to force a repaint
 	InvalidateRect(hWnd, NULL, TRUE);
 }
 
@@ -553,7 +558,7 @@ void BeebView_LoadMemDump(HWND hWnd)
 	hFileHandle = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
 	if(hFileHandle == INVALID_HANDLE_VALUE) {
 		char fileMessage[50+MAX_PATH];
-		strcpy_s(fileMessage, "There was a problen opening the file '");
+		strcpy_s(fileMessage, "There was a problem opening the file '");
 		strcat_s(fileMessage, szFileName);
 		strcat_s(fileMessage, "'.");
 		MessageBox(hWnd, fileMessage, "File Error", MB_ICONEXCLAMATION | MB_OK);

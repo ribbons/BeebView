@@ -32,6 +32,7 @@ void BeebView_UpdateTitle(HWND);
 COLORREF BeebView_GetColour(int);
 void BeebView_CycleColour(int);
 void BeebView_LoadFile(HWND hWnd);
+void BeebView_ForceRepaint(HWND hWnd);
 void BeebView_LoadMemDump(HWND hWnd);
 void BeebView_SaveBitmap(HWND hWnd);
 int dispHeight(int bbcHeight);
