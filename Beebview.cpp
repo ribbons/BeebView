@@ -313,6 +313,12 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			BeebView_SaveBitmap(hWnd);
 			break;
 		case IDM_EXIT:
+			// Clean up the screen object if it exists
+			if(screen != NULL)
+			{
+				delete screen;
+			}
+
 			DestroyWindow(hWnd);
 			break;
 		case IDM_MODE0:
@@ -498,6 +504,12 @@ BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
 
 	// Initialise a new BbcScreen instance to store the data in
 	int fileSize = GetFileSize(hFileHandle, NULL);
+
+	if(screen != NULL)
+	{
+		delete screen;
+	}
+
 	screen = new BbcScreen(fileSize);
 
 	DWORD bytesRead = 0;
