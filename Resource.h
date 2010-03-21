@@ -14,6 +14,8 @@
   to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 **************************************************************************************************************/
 
+#pragma once
+
 #define IDD_BEEBVIEW_DIALOG             102
 #define IDS_APP_TITLE                   103
 #define IDS_LICENSETEXT                 104

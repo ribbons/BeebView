@@ -22,7 +22,15 @@
 #define LOADFILTER "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0"
 #define SAVEFILTER "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0"
 
-// Message Handler Functions
+// Application global variables
+extern HINSTANCE hInst; // current instance
+
+// Standard Windows application functions
+ATOM				MyRegisterClass(HINSTANCE hInstance);
+BOOL				InitInstance(HINSTANCE, int);
+LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+
+// Message Handler functions
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct);
 void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu);
 void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify);
@@ -39,7 +47,7 @@ BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName);
 void BeebView_SaveBitmap(HWND hWnd);
 int dispHeight(int bbcHeight);
 
-// Util Functions
+// Util functions
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 int WindowHeight(int iClientHeight);
 int WindowWidth();

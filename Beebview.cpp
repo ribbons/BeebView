@@ -18,6 +18,7 @@
 #include "Beebview.h"
 #include "BbcScreen.h"
 #include "Bitmap.h"
+#include "About.h"
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -29,12 +30,6 @@ BbcScreen *screen = NULL;
 
 char currentFileTitle[MAX_PATH] = "";
 bool bAutoSave = false;
-
-// Forward declarations of functions included in this code module:
-ATOM				MyRegisterClass(HINSTANCE hInstance);
-BOOL				InitInstance(HINSTANCE, int);
-LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
@@ -124,20 +119,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	return (int) msg.wParam;
 }
 
-
-
 //
 //  FUNCTION: MyRegisterClass()
 //
 //  PURPOSE: Registers the window class.
-//
-//  COMMENTS:
-//
-//    This function and its usage are only necessary if you want this code
-//    to be compatible with Win32 systems prior to the 'RegisterClassEx'
-//    function that was added to Windows 95. It is important to call this function
-//    so that the application will get 'well formed' small icons associated
-//    with it.
 //
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
@@ -165,11 +150,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 //   PURPOSE: Saves instance handle and creates main window
 //
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
@@ -195,11 +175,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //  PURPOSE:  Processes messages for the main window.
 //
-//  WM_COMMAND	- process the application menu
-//  WM_PAINT	- Paint the main window
-//  WM_DESTROY	- post a quit message and return
-//
-//
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) 
@@ -213,60 +188,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;
-}
-
-// Message handler for about box.
-LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		CenterWindow (hDlg, GetWindow (hDlg, GW_OWNER)); 
-		
-		// Set the license text
-		TCHAR lpLicense[1000];
-		LoadString(hInst, IDS_LICENSETEXT, lpLicense, sizeof(lpLicense)/sizeof(lpLicense[0]));
-		SetDlgItemText (hDlg, IDC_LICENSE, lpLicense);
-		
-		// Calculate the height of font that we need to use
-		HDC hdc;
-		long lfHeight;
-		hdc = GetDC(NULL);
-		lfHeight = -MulDiv(8, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-		ReleaseDC(NULL, hdc);
-		
-		// Set the font for the url style label (to give us underline)
-		SendMessage (GetDlgItem (hDlg, IDC_URL), WM_SETFONT, (WPARAM)CreateFont(lfHeight, 0, 0, 0, 0, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "MS Shell Dlg"), FALSE);
-		
-		// Set the cursor for the url style label
-		HCURSOR hCursor;
-		hCursor = LoadCursor(NULL, IDC_HAND);
-		SetClassLong(GetDlgItem (hDlg, IDC_URL), GCL_HCURSOR, (LONG)hCursor);
-		return TRUE;
-		
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) 
-		{
-			EndDialog(hDlg, LOWORD(wParam));
-			return TRUE;
-		}
-		if (LOWORD(wParam) == IDC_URL)
-		{
-			ShellExecute(NULL, "open", "http://www.nerdoftheherd.com/tools/beebview/", NULL, NULL, SW_SHOWNORMAL);
-			return TRUE;
-		}
-		break;
-
-	case WM_CTLCOLORSTATIC:
-		if((HWND)lParam == GetDlgItem(hDlg, IDC_URL))
-		{
-			SetTextColor((HDC)wParam, RGB(0, 0, 255));
-			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (BOOL)GetStockObject(NULL_BRUSH);
-		}
-		break;
-	}
-	return FALSE;
 }
 
 // Message Handler Functions -----------------------------------------------------------------------
