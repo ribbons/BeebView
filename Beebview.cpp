@@ -27,12 +27,7 @@ TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
 BbcScreen *screen = NULL;
 
-char szFilterSpec [128] = "BBC Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0";
-char szFileName[MAX_PATH] = "";
-char szFileTitle[MAX_PATH] = "";
-char szSaveFilterSpec [128] = "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0";
-char szSaveFileName[MAX_PATH] = "";
-char szSaveFileTitle[MAX_PATH] = "";
+char currentFileTitle[MAX_PATH] = "";
 bool bAutoSave = false;
 
 // Forward declarations of functions included in this code module:
@@ -53,7 +48,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
 	// Work through the command line parameters.
 	// This block of code will set szFileName to the last quoted part of the command line, and pick up any other params.
-	char *params;
+	/* char *params;
 	char *context;
 	bool bInQuotes = false;
 
@@ -78,7 +73,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				}
 			} else {
 				// Process other command line params
-				/* if(strcmp(params, "--save") == 0 ) {
+				if(strcmp(params, "--save") == 0 ) {
 					bAutoSave = true;
 				} else if(strcmp(params, "--mode0") == 0 ) {
 					BeebView_SetMode(0);
@@ -90,7 +85,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 					BeebView_SetMode(4);
 				} else if(strcmp(params, "--mode5") == 0 ) {
 					BeebView_SetMode(5);
-				} */
+				}
 			}
 		}
 
@@ -106,7 +101,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		if(pPos != NULL) {
 			strncpy_s(szFileTitle, MAX_PATH, szFileTitle, (int)(pPos - szFileTitle));
 		}
-	}
+	} */
 
 	// Perform application initialization:
 	if (!InitInstance (hInstance, nCmdShow)) 
@@ -391,16 +386,10 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 	switch (id)
 	{
 		case IDM_OPEN:
-			OpenDialog(hWnd, szFilterSpec, szFileName, MAX_PATH, "Open file", szFileTitle, MAX_PATH);
-			BeebView_LoadFile(hWnd);
+			BeebView_OpenFile(hWnd);
 			break;
 		case IDM_SAVEAS:
-			// Set the default file title
-			strcpy_s(szSaveFileName, szFileTitle);
-			// Show the save as dialog
-			if(SaveDialog(hWnd, szSaveFilterSpec, szSaveFileName, MAX_PATH, "Save As", szSaveFileTitle, MAX_PATH, "bmp")) {
-				BeebView_SaveBitmap(hWnd);
-			}
+			BeebView_SaveBitmap(hWnd);
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
@@ -509,46 +498,78 @@ void BeebView_CycleColour(int colour)
 	screen->setColour(colour, (screen->getColour(colour) + 1) % 8);
 }
 
-void BeebView_LoadFile(HWND hWnd)
+void BeebView_OpenFile(HWND hWnd)
 {
-	// check for empty filename string
-	if(strlen(szFileName) == 0) {
-		return;
-	}
-
-	BeebView_LoadMemDump(hWnd);
-
-	// Update the window title bar
-	int titleLen = strlen(szAppName) + 14 + strlen(szFileTitle);
-	char *windowTitle = new char[titleLen];
-	sprintf_s(windowTitle, titleLen, "%s - %s  [MODE %d]", szAppName, szFileTitle, screen->getMode());
-	SetWindowText(hWnd, windowTitle);
-	delete []windowTitle;
+	char fileName[MAX_PATH] = "";
+	char fileTitle[MAX_PATH] = "";
 	
-	BeebView_ForceRepaint(hWnd);
+	OPENFILENAME opfil;
+	memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
+	opfil.lStructSize = sizeof(opfil);
+	opfil.hwndOwner = hWnd;
+	opfil.hInstance = NULL;	              //application instance
+	opfil.lpstrFilter = LOADFILTER;       //filter of files separated by \0
+	opfil.lpstrFile = fileName;           //absolute path of filename
+	opfil.nMaxFile = MAX_PATH;            //length of filename buffer    
+	opfil.lpstrFileTitle = fileTitle;     //filename with no path
+	opfil.nMaxFileTitle = MAX_PATH;       //length of filename buffer
+	opfil.lpstrTitle = "Open file";       //title of dialog box
+	opfil.Flags = OFN_HIDEREADONLY;       //optional flags
+
+	int result = GetOpenFileName(&opfil);
+	
+	if(result != 0)
+	{
+		// Trim the extension off the file title if there is a '.' in it.
+		char *dotPos = strrchr(fileTitle, '.');
+	
+		if(dotPos != NULL) {
+			*dotPos = '\0';
+		}
+		
+		strcpy_s(currentFileTitle, fileTitle);
+
+		BeebView_LoadFile(hWnd, fileName);
+	}
+}
+
+void BeebView_LoadFile(HWND hWnd, char *fileName)
+{
+	if(BeebView_LoadMemDump(hWnd, fileName))
+	{
+		BeebView_ForceRepaint(hWnd);
+	}
 }
 
 void BeebView_ForceRepaint(HWND hWnd)
 {
+	// Update the window title bar
+	int titleLen = strlen(szAppName) + 14 + strlen(currentFileTitle);
+	char *windowTitle = new char[titleLen];
+	sprintf_s(windowTitle, titleLen, "%s - %s  [MODE %d]", szAppName, currentFileTitle, screen->getMode());
+	SetWindowText(hWnd, windowTitle);
+	delete []windowTitle;
+
 	screen->generateBitmap(hWnd);
 
 	// Invalidate the client area to force a repaint
 	InvalidateRect(hWnd, NULL, TRUE);
 }
 
-void BeebView_LoadMemDump(HWND hWnd)
+BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
 {
 	HANDLE hFileHandle;
 
 	// open the file
-	hFileHandle = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
+	hFileHandle = CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
+
 	if(hFileHandle == INVALID_HANDLE_VALUE) {
-		char fileMessage[50+MAX_PATH];
-		strcpy_s(fileMessage, "There was a problem opening the file '");
-		strcat_s(fileMessage, szFileName);
-		strcat_s(fileMessage, "'.");
-		MessageBox(hWnd, fileMessage, "File Error", MB_ICONEXCLAMATION | MB_OK);
-		return;
+		int messageLen = strlen(fileName) + 41;
+		char *message = new char[messageLen];
+		sprintf_s(message, messageLen, "There was a problem opening the file \"%s\".", fileName);
+		MessageBox(hWnd, message, "File Error", MB_ICONEXCLAMATION | MB_OK);
+		delete []message;
+		return false;
 	}
 
 	// Initialise a new BbcScreen instance to store the data in
@@ -575,9 +596,38 @@ void BeebView_LoadMemDump(HWND hWnd)
 
 	// Resize the window
 	SetWindowPos(hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(dispHeight(screen->getScreenHeight())), SWP_NOMOVE | SWP_NOZORDER);
+
+	return true;
 }
 
 void BeebView_SaveBitmap(HWND hWnd) {
+	char saveFileName[MAX_PATH] = "";
+	char saveFileTitle[MAX_PATH] = "";
+	
+	// Set the default file name
+	strcpy_s(saveFileName, currentFileTitle);
+	
+	// Show the save as dialog
+	OPENFILENAME opfil;
+	memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
+	opfil.lStructSize = sizeof(opfil);
+	opfil.hwndOwner = hWnd;
+	opfil.hInstance = NULL;	                 //application instance
+	opfil.lpstrFilter = SAVEFILTER;          //filter of files separated by \0
+	opfil.lpstrFile = saveFileName;          //absolute path of filename
+	opfil.nMaxFile = MAX_PATH;               //length of filename buffer    
+	opfil.lpstrFileTitle = saveFileTitle;    //filename with no path
+	opfil.nMaxFileTitle = MAX_PATH;          //length of filename buffer
+	opfil.lpstrDefExt = "bmp";               //Default file extension
+	opfil.lpstrTitle = "Save As";            //title of dialog box
+	opfil.Flags = OFN_HIDEREADONLY;          //optional flags    
+	int result = GetSaveFileName(&opfil);
+
+	if(result == 0)
+	{
+		return;
+	}
+
 	// Get the handle of the screen DC
 	HDC screenDC = GetDC(hWnd);
 
@@ -596,7 +646,7 @@ void BeebView_SaveBitmap(HWND hWnd) {
 	StretchBlt(sizedDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), bitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
 
 	// Save the bitmap
-	bmp::SaveBmp(sizedDC, szSaveFileName, true);
+	bmp::SaveBmp(sizedDC, saveFileName, true);
 
 	// Select the original bitmap
 	SelectBitmap(bitmapDC, oldBitmap);
@@ -613,52 +663,6 @@ int dispHeight(int bbcHeight)
 }
 
 // Utility Functions -------------------------------------------------------------------------------
-
-BOOL OpenDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen,
-                LPSTR dlgtitle=NULL, LPSTR filtitle=NULL, UINT iFilTitleLen=0)
-{
-    OPENFILENAME opfil;
-    memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
-    opfil.lStructSize = sizeof(opfil);
-	opfil.hwndOwner = hwndOwner;
-    opfil.hInstance = NULL;	                    //application instance
-    opfil.lpstrFilter = filter;                 //filter of files separated by \0
-    opfil.lpstrFile = fil;                      //absolute path of filename
-    opfil.nMaxFile = iFilLen;                   //length of filename buffer    
-    opfil.lpstrFileTitle = filtitle;            //filename with no path
-    opfil.nMaxFileTitle = iFilTitleLen;         //length of filename buffer
-    opfil.lpstrTitle = dlgtitle;                //title of dialog box
-    opfil.Flags = OFN_HIDEREADONLY;             //optional flags
-
-	BOOL bResult = GetOpenFileName(&opfil);
-	
-	// Trim the extension off the file title if there is a '.' in the title.
-	char *pPos = strrchr(filtitle, '.');
-	if(pPos != NULL) {
-		strncpy_s(filtitle, MAX_PATH, filtitle, (int)(pPos - filtitle));
-	}
-
-	return bResult;
-}
-
-BOOL SaveDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen,
-                LPSTR dlgtitle=NULL, LPSTR filtitle=NULL, UINT iFilTitleLen=0, LPSTR lpstrDefExt=NULL)
-{
-    OPENFILENAME opfil;
-    memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
-    opfil.lStructSize = sizeof(opfil);
-	opfil.hwndOwner = hwndOwner;
-    opfil.hInstance = NULL;	                    //application instance
-    opfil.lpstrFilter = filter;                 //filter of files separated by \0
-    opfil.lpstrFile = fil;                      //absolute path of filename
-    opfil.nMaxFile = iFilLen;                   //length of filename buffer    
-    opfil.lpstrFileTitle = filtitle;            //filename with no path
-    opfil.nMaxFileTitle = iFilTitleLen;         //length of filename buffer
-	opfil.lpstrDefExt = lpstrDefExt;			//Default file extension
-    opfil.lpstrTitle = dlgtitle;                //title of dialog box
-    opfil.Flags = OFN_HIDEREADONLY;             //optional flags    
-    return GetSaveFileName(&opfil);
-}
 
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent) 
 { 

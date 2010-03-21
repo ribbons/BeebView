@@ -19,6 +19,8 @@
 #include "resource.h"
 
 #define READBUF 100
+#define LOADFILTER "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0"
+#define SAVEFILTER "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0"
 
 // Message Handler Functions
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct);
@@ -29,17 +31,15 @@ void BeebView_OnDestroy(HWND hWnd);
 
 // BeebView functions
 void BeebView_UpdateTitle(HWND);
-COLORREF BeebView_GetColour(int);
 void BeebView_CycleColour(int);
-void BeebView_LoadFile(HWND hWnd);
+void BeebView_OpenFile(HWND hWnd);
+void BeebView_LoadFile(HWND hWnd, char *fileName);
 void BeebView_ForceRepaint(HWND hWnd);
-void BeebView_LoadMemDump(HWND hWnd);
+BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName);
 void BeebView_SaveBitmap(HWND hWnd);
 int dispHeight(int bbcHeight);
 
 // Util Functions
-BOOL SaveDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen, LPSTR dlgtitle, LPSTR filtitle, UINT iFilTitleLen, LPSTR lpstrDefExt);
-BOOL OpenDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen, LPSTR dlgtitle, LPSTR filtitle, UINT iFilTitleLen);
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 int WindowHeight(int iClientHeight);
 int WindowWidth();
