@@ -552,6 +552,9 @@ void BeebView_ForceRepaint(HWND hWnd)
 
 	screen->generateBitmap(hWnd);
 
+	// Resize the window
+	SetWindowPos(hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(dispHeight(screen->getScreenHeight())), SWP_NOMOVE | SWP_NOZORDER);
+
 	// Invalidate the client area to force a repaint
 	InvalidateRect(hWnd, NULL, TRUE);
 }
@@ -593,9 +596,6 @@ BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
 
 	// close the file
 	CloseHandle(hFileHandle);
-
-	// Resize the window
-	SetWindowPos(hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(dispHeight(screen->getScreenHeight())), SWP_NOMOVE | SWP_NOZORDER);
 
 	return true;
 }
