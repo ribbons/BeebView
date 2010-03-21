@@ -18,7 +18,10 @@
 
 #include "resource.h"
 
-#define READBUF 100
+#define BV_WIDTH  640           // width  of "screen" (client area)
+#define BV_DEFAULT_HEIGHT 512   // default height of "screen" (client area)
+#define READBUF 1024            // Buffer size for loading memory dump files
+
 #define LOADFILTER "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0"
 #define SAVEFILTER "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0"
 
