@@ -43,13 +43,3 @@ BOOL OpenDialog(HWND hwndOwner, LPSTR filter, LPSTR fil, UINT iFilLen, LPSTR dlg
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 int WindowHeight(int iClientHeight);
 int WindowWidth();
-void SaveDib(HDC hDC, LPCTSTR lpszFileName, BOOL bOverwriteExisting);
-
-
-namespace dib
-{
-    int GetBytesPerPixel(int depth);
-    int GetBytesPerRow(int width, int depth);
-    int GetBitmapBytes(int width, int height, int depth);
-    int GetBitmapBytes(const BITMAPINFOHEADER *bmih);
-};

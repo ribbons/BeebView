@@ -189,6 +189,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Bitmap.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -220,6 +224,10 @@
 			</File>
 			<File
 				RelativePath=".\Beebview.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Bitmap.h"
 				>
 			</File>
 			<File

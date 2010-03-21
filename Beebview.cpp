@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "Beebview.h"
 #include "BbcScreen.h"
+#include "Bitmap.h"
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -473,24 +474,20 @@ void BeebView_OnPaint(HWND hWnd)
 	PAINTSTRUCT PaintStruct;
 
 	// begin paint & get the handle of the screen DC
-	HDC ScreenDC = BeginPaint(hWnd, &PaintStruct);
+	HDC screenDC = BeginPaint(hWnd, &PaintStruct);
 
 	if(screen != NULL)
 	{
-		// create a DC for the bitmap (it already exists)
-		HDC BitmapDC = CreateCompatibleDC(ScreenDC);
-		
-		// save handle of current bitmap & select bitmap
-		HBITMAP OldBitmap = SelectBitmap(BitmapDC, screen->getBitmap());
+		// Create a DC for the bitmap & select bitmap
+		HDC bitmapDC = CreateCompatibleDC(screenDC);
+		HBITMAP oldBitmap = SelectBitmap(bitmapDC, screen->getBitmap());
 
 		// paint the bitmap
-		StretchBlt(ScreenDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), BitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
+		StretchBlt(screenDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), bitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
 
-		// select previous bitmap
-		SelectBitmap(BitmapDC, OldBitmap);
-
-		// release DC
-		DeleteDC(BitmapDC);
+		// select previous bitmap & release the DC
+		SelectBitmap(bitmapDC, oldBitmap);
+		DeleteDC(bitmapDC);
 	}
 
 	EndPaint(hWnd, &PaintStruct);
@@ -581,39 +578,33 @@ void BeebView_LoadMemDump(HWND hWnd)
 }
 
 void BeebView_SaveBitmap(HWND hWnd) {
-	/* int nWidth = BeebView_Width(hWnd, nMode);
+	// Get the handle of the screen DC
+	HDC screenDC = GetDC(hWnd);
 
-	// get the handle of the screen DC
-	HDC ScreenDC = GetDC(hWnd);
+	// Create a DC for the bitmap & select it
+	HDC bitmapDC = CreateCompatibleDC(screenDC);
+	HBITMAP oldBitmap = SelectBitmap(bitmapDC, screen->getBitmap());
 
-	// create a DC for the bitmap (it already exists)
-	HDC BitmapDC = CreateCompatibleDC(ScreenDC);
+	// Create a compatible bitmap for the resized image
+	HBITMAP sizedBitmap = CreateCompatibleBitmap(screenDC, BV_WIDTH, dispHeight(screen->getScreenHeight()));
+	
+	// Create a DC for the resized image bitmap & select it
+	HDC sizedDC = CreateCompatibleDC(screenDC);
+	SelectBitmap(sizedDC, sizedBitmap);
 
-	// save handle of current bitmap & select bitmap
-	HBITMAP OldBitmap = SelectBitmap(BitmapDC, TheBitmap);
-
-	// create a bitmap, compatible with the screen
-	HBITMAP SizedBitmap = CreateCompatibleBitmap(ScreenDC, BV_WIDTH, iClientHeight);
-
-	// create a DC for it
-	HDC SizedDC = CreateCompatibleDC(ScreenDC);
-
-	HBITMAP OldSizedBitmap = SelectBitmap(SizedDC, SizedBitmap);
-
-	// paint the bitmap
-	int res=StretchBlt(SizedDC, 0, 0, BV_WIDTH, iClientHeight, BitmapDC, 0, 0, nWidth, iBBCHeight, SRCCOPY);
+	// Resize the bitmap to the output size
+	StretchBlt(sizedDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), bitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
 
 	// Save the bitmap
-	SaveDib(SizedDC, szSaveFileName, true);
+	bmp::SaveBmp(sizedDC, szSaveFileName, true);
 
-	// select previous bitmap
-	SelectBitmap(BitmapDC, OldBitmap);
-	// release DC
-	DeleteDC(BitmapDC);
-	DeleteDC(SizedDC);
+	// Select the original bitmap
+	SelectBitmap(bitmapDC, oldBitmap);
 
-	// release the screen DC
-	ReleaseDC(hWnd, ScreenDC); */
+	// Release the DCs
+	DeleteDC(bitmapDC);
+	DeleteDC(sizedDC);
+	ReleaseDC(hWnd, screenDC);
 }
 
 int dispHeight(int bbcHeight)
@@ -724,165 +715,3 @@ int WindowHeight(int iClientHeight) {
 int WindowWidth() {
 	return BV_WIDTH + (GetSystemMetrics(SM_CXFIXEDFRAME)*2);
 }
-
-void SaveDib(HDC hDC, LPCTSTR lpszFileName, BOOL bOverwriteExisting)
-{
-    HBITMAP hBitmap = (HBITMAP)GetCurrentObject(hDC, OBJ_BITMAP);
-
-    // The .BMP file format is as follows:
-    // BITMAPFILEHEADER / BITMAPINFOHEADER / color table / pixel data
-
-    // We need the pixel data and the BITMAPINFOHEADER.
-    // We can get both by using GetDIBits:
-    BITMAP bitmapObject;
-    GetObject(hBitmap, sizeof(BITMAP), &bitmapObject);
-
-    BITMAPINFO *bmi = (BITMAPINFO *)_alloca(sizeof(BITMAPINFOHEADER)
-                        + 256*sizeof(RGBQUAD));
-    memset(&bmi->bmiHeader, 0, sizeof(BITMAPINFOHEADER));
-    bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-
-    int scanLineCount = GetDIBits(hDC, hBitmap, 0, bitmapObject.bmHeight,
-                        NULL, bmi, DIB_RGB_COLORS);
-
-    // This is important:
-    // GetDIBits will, by default, set this to BI_BITFIELDS.
-    bmi->bmiHeader.biCompression = BI_RGB;
-
-    int imageBytes = dib::GetBitmapBytes(&bmi->bmiHeader);
-    char *pBits = (char *)malloc(imageBytes);
-
-    scanLineCount = GetDIBits(hDC, hBitmap, 0, bitmapObject.bmHeight,
-                        pBits, bmi, DIB_RGB_COLORS);
-
-    // OK, so we've got the bits, and the BITMAPINFOHEADER.
-    // Now we can put them in a file.
-    HANDLE hFile = CreateFile(lpszFileName, GENERIC_WRITE, 0, NULL,
-                    bOverwriteExisting ? CREATE_ALWAYS : CREATE_NEW,
-                    0, NULL);
-    if (hFile != INVALID_HANDLE_VALUE)
-    {
-        // We don't deal with writing anything else at the moment.
-        assert(bmi->bmiHeader.biBitCount == 32);
-
-        // .BMP file begins with a BITMAPFILEHEADER,
-        // so we'll write that.
-        BITMAPFILEHEADER bmfh;
-        bmfh.bfType = MAKEWORD('B','M');
-        bmfh.bfSize = sizeof(BITMAPFILEHEADER)
-                    + sizeof(BITMAPINFOHEADER)
-                    + (bmi->bmiHeader.biClrUsed * sizeof(RGBQUAD))
-                    + bmi->bmiHeader.biSizeImage;
-        bmfh.bfReserved1 = 0;
-        bmfh.bfReserved2 = 0;
-        bmfh.bfOffBits = sizeof(BITMAPFILEHEADER)
-                    + sizeof(BITMAPINFOHEADER)
-                    + (bmi->bmiHeader.biClrUsed * sizeof(RGBQUAD));
-
-        DWORD bytesWritten;
-        WriteFile(hFile, &bmfh, sizeof(BITMAPFILEHEADER),
-                    &bytesWritten, NULL);
-
-        // Then it's followed by the BITMAPINFOHEADER structure
-        WriteFile(hFile, &bmi->bmiHeader, sizeof(BITMAPINFOHEADER),
-                    &bytesWritten, NULL);
-        
-        // Then the colour table.
-        // ...which we don't support yet.
-
-        // Then the pixel data.
-        WriteFile(hFile, pBits, imageBytes, &bytesWritten, NULL);
-
-        CloseHandle(hFile);
-    }
-
-    free(pBits);
-}
-
-namespace dib
-{
-    int GetBytesPerPixel(int depth)
-    {
-        return (depth==32 ? 4 : 3);
-    }
-
-    int GetBytesPerRow(int width, int depth)
-    {
-        int bytesPerPixel = GetBytesPerPixel(depth);
-        int bytesPerRow = ((width * bytesPerPixel + 3) & ~3);
-
-        return bytesPerRow;
-    }
-
-    int GetBitmapBytes(int width, int height, int depth)
-    {
-        return height * GetBytesPerRow(width, depth);
-    }
-
-    int GetBitmapBytes(const BITMAPINFOHEADER *bmih)
-    {
-        return GetBitmapBytes(bmih->biWidth, bmih->biHeight, bmih->biBitCount);
-    }
-
-    template <class Transform>
-        void ApplyBitmapTransform(const BITMAPINFO *bmi,
-                const void *pSourceBits, void *pDestBits, const Transform & trans)
-    {
-        ASSERT(bmi->bmiHeader.biBitCount == 32);
-
-        const RGBQUAD *pSource = (const RGBQUAD *)pSourceBits;
-        RGBQUAD *pDest = (RGBQUAD *)pDestBits;
-
-        for (int y = 0; y < bmi->bmiHeader.biHeight; ++y)
-        {
-            for (int x = 0; x < bmi->bmiHeader.biWidth; ++x)
-            {
-                int offset = x + (bmi->bmiHeader.biWidth * y);
-
-                RGBQUAD src = pSource[offset];
-                RGBQUAD dst = trans(src);
-                pDest[offset] = dst;
-            }
-        }
-    }
-
-    class ColourShiftTransform
-    {
-    protected:
-        // Shift the channel down a little,
-        // making sure that we don't wrap.
-        BYTE Downshift(BYTE b, BYTE down_by) const
-        {
-            if (b > down_by)
-                return b - down_by;
-
-            return 0;
-        }
-
-        // Shift the channel up a little,
-        // making sure that we saturate, rather than wrap.
-        BYTE Upshift(BYTE b, BYTE up_by) const
-        {
-            if (b < (255 - up_by))
-                return b + up_by;
-
-            return 255;
-        }
-    };
-
-    class RedShiftTransform : public ColourShiftTransform
-    {
-    public:
-        RGBQUAD operator() (RGBQUAD src) const
-        {
-            RGBQUAD result;
-
-            result.rgbBlue = Downshift(src.rgbBlue, 40);
-            result.rgbGreen = Downshift(src.rgbGreen, 40);
-            result.rgbRed = Upshift(src.rgbRed, 40);
-            result.rgbReserved = src.rgbReserved;
-
-            return result;
-        }
-    };
-};
