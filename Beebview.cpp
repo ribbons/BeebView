@@ -25,7 +25,7 @@ HINSTANCE hInst;								// current instance
 TCHAR szAppName[MAX_LOADSTRING];			    // The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
-BbcScreen *screen;
+BbcScreen *screen = NULL;
 
 char szFilterSpec [128] = "BBC Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0";
 char szFileName[MAX_PATH] = "";
