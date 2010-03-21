@@ -22,14 +22,12 @@
 #define MAX_LOADSTRING 100
 
 // Global Variables:
-HINSTANCE hInst;								// current instance
-TCHAR szAppName[MAX_LOADSTRING];			    // The title bar text
-TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-
+HINSTANCE hInst;                         // current instance
+TCHAR     szAppName[MAX_LOADSTRING];     // The title bar text
+TCHAR     szWindowClass[MAX_LOADSTRING]; // the main window class name
+char      currentFileTitle[MAX_PATH] = "";
 BbcScreen *screen = NULL;
 
-char currentFileTitle[MAX_PATH] = "";
-bool bAutoSave = false;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
@@ -40,63 +38,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	LoadString(hInstance, IDS_APP_TITLE, szAppName, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_BEEBVIEW, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
-
-	// Work through the command line parameters.
-	// This block of code will set szFileName to the last quoted part of the command line, and pick up any other params.
-	/* char *params;
-	char *context;
-	bool bInQuotes = false;
-
-	params = strtok_s(lpCmdLine, " ", &context);
-
-	while (params != NULL)
-	{
-		if(bInQuotes) {
-			strcat_s(szFileName, " ");
-			strcat_s(szFileName, params);
-			if(params[strlen(params)-1] == '"') {
-				strncpy_s(szFileName, MAX_PATH, szFileName, strlen(szFileName)-1);
-				bInQuotes = false;
-			}
-		} else {
-			if(params[0] == '"') {
-				strcpy_s(szFileName, params+1);
-				if(params[strlen(params)-1] == '"') {
-					strncpy_s(szFileName, MAX_PATH, szFileName, strlen(szFileName)-1);
-				} else {
-					bInQuotes = true;
-				}
-			} else {
-				// Process other command line params
-				if(strcmp(params, "--save") == 0 ) {
-					bAutoSave = true;
-				} else if(strcmp(params, "--mode0") == 0 ) {
-					BeebView_SetMode(0);
-				} else if(strcmp(params, "--mode1") == 0 ) {
-					BeebView_SetMode(1);
-				} else if(strcmp(params, "--mode2") == 0 ) {
-					BeebView_SetMode(2);
-				} else if(strcmp(params, "--mode4") == 0 ) {
-					BeebView_SetMode(4);
-				} else if(strcmp(params, "--mode5") == 0 ) {
-					BeebView_SetMode(5);
-				}
-			}
-		}
-
-		params = strtok_s(NULL, " ", &context);
-	}
-
-	// If szFileName has been set, set szFileTitle to the file title (without extension).
-	if(strlen(szFileName) > 0) {
-		char *tempTitle = strrchr(szFileName, '\\') + 1;
-		strcpy_s(szFileTitle, tempTitle);
-		char *pPos = strrchr(szFileTitle, '.');
-
-		if(pPos != NULL) {
-			strncpy_s(szFileTitle, MAX_PATH, szFileTitle, (int)(pPos - szFileTitle));
-		}
-	} */
 
 	// Perform application initialization:
 	if (!InitInstance (hInstance, nCmdShow)) 
@@ -194,18 +135,102 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 {
-	//BeebView_SetBitmapPixels(hWnd);
+	char          *fileName   = NULL;
+	unsigned char screenMode  = DEFAULT_MODE;
+	bool          autoSave    = false;
+	
+	// Process command line arguments
+	if(__argc > 1)
+	{
+		for(int checkArgs = 1; checkArgs < __argc; checkArgs++)
+		{
+			char *thisArg = __argv[checkArgs];
 
-	// Automatically save the file and exit if bAutoSave is true
-	/* if(bAutoSave) {
-		// Add .bmp to the loaded file.
-		strcpy_s(szSaveFileName, szFileName);
-		strcat_s(szSaveFileName, ".bmp");
-		BeebView_SaveBitmap(hWnd);
+			if(strcmp(thisArg, "--save") == 0 )
+			{
+				autoSave = true;
+			}
+			else if(strcmp(thisArg, "--mode0") == 0 )
+			{
+				screenMode = 0;
+			}
+			else if(strcmp(thisArg, "--mode1") == 0 )
+			{
+				screenMode = 1;
+			}
+			else if(strcmp(thisArg, "--mode2") == 0 )
+			{
+				screenMode = 2;
+			}
+			else if(strcmp(thisArg, "--mode4") == 0 )
+			{
+				screenMode = 4;
+			}
+			else if(strcmp(thisArg, "--mode5") == 0 )
+			{
+				screenMode = 5;
+			}
+			else
+			{
+				// As this doesn't match any switches, assume it is a filename
+				fileName = thisArg;
+			}
+		}
+	}
+
+	if(fileName != NULL)
+	{
+		// Extract the file name from the file path for the window title
+		char *lastSlash = strrchr(fileName, '\\');
+
+		if(lastSlash == NULL)
+		{
+			strcpy_s(currentFileTitle, fileName);
+		}
+		else
+		{
+			strcpy_s(currentFileTitle, lastSlash + 1);
+		}
+
+		// Remove the file extension in the title if there is one
+		deleteExtension(currentFileTitle);
+
+		BeebView_LoadFile(hWnd, fileName);
+
+		if(screen != NULL)
+		{
+			// If the image was loaded okay, now set the mode
+			screen->setMode(screenMode);
+			BeebView_ForceRepaint(hWnd);
+		}
+	}
+
+	// Automatically save the file and exit if autoSave is true
+	if(autoSave)
+	{
+		// Only attempt to save a file if one was loaded
+		if(screen != NULL)
+		{
+			int saveNameLen = strlen(fileName) + 4;
+			char *saveName = new char[saveNameLen];
+			strcpy_s(saveName, saveNameLen, fileName);
+
+			// Remove the file extension if there is one
+			deleteExtension(saveName);
+
+			// Append .bmp to the save filename
+			strcat_s(saveName, saveNameLen, ".bmp");
+
+			// Save the image
+			BeebView_SaveBitmap(hWnd, saveName);
+
+			// Clean up the save filename
+			delete []saveName;
+		}
 
 		// Close the program
 		DestroyWindow(hWnd);
-	} */
+	}
 
 	return TRUE;
 }
@@ -310,15 +335,9 @@ void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			BeebView_OpenFile(hWnd);
 			break;
 		case IDM_SAVEAS:
-			BeebView_SaveBitmap(hWnd);
+			BeebView_SaveBitmapPrompt(hWnd);
 			break;
 		case IDM_EXIT:
-			// Clean up the screen object if it exists
-			if(screen != NULL)
-			{
-				delete screen;
-			}
-
 			DestroyWindow(hWnd);
 			break;
 		case IDM_MODE0:
@@ -411,8 +430,11 @@ void BeebView_OnPaint(HWND hWnd)
 
 void BeebView_OnDestroy(HWND hWnd)
 {
-	// delete bitmap from memory
-	//DeleteBitmap(TheBitmap);
+	// Clean up the screen object if it exists
+	if(screen != NULL)
+	{
+		delete screen;
+	}
 
 	PostQuitMessage(0);
 }
@@ -447,12 +469,8 @@ void BeebView_OpenFile(HWND hWnd)
 	
 	if(result != 0)
 	{
-		// Trim the extension off the file title if there is a '.' in it.
-		char *dotPos = strrchr(fileTitle, '.');
-	
-		if(dotPos != NULL) {
-			*dotPos = '\0';
-		}
+		// Remove the file extension from the title if there is one
+		deleteExtension(fileTitle);
 		
 		strcpy_s(currentFileTitle, fileTitle);
 
@@ -533,7 +551,8 @@ BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
 	return true;
 }
 
-void BeebView_SaveBitmap(HWND hWnd) {
+void BeebView_SaveBitmapPrompt(HWND hWnd)
+{
 	char saveFileName[MAX_PATH] = "";
 	char saveFileTitle[MAX_PATH] = "";
 	
@@ -561,6 +580,11 @@ void BeebView_SaveBitmap(HWND hWnd) {
 		return;
 	}
 
+	BeebView_SaveBitmap(hWnd, saveFileName);
+}
+
+void BeebView_SaveBitmap(HWND hWnd, char *saveFileName)
+{
 	// Get the handle of the screen DC
 	HDC screenDC = GetDC(hWnd);
 
@@ -651,4 +675,15 @@ int WindowHeight(int iClientHeight) {
 
 int WindowWidth() {
 	return BV_WIDTH + (GetSystemMetrics(SM_CXFIXEDFRAME)*2);
+}
+
+void deleteExtension(char *fileName)
+{
+	// Find the last full stop in the filename if there is one
+	char *dotPos = strrchr(fileName, '.');
+	
+	if(dotPos != NULL) {
+		// Move the end of the string to where the dot is
+		*dotPos = '\0';
+	}
 }

@@ -44,10 +44,12 @@ void BeebView_OpenFile(HWND hWnd);
 void BeebView_LoadFile(HWND hWnd, char *fileName);
 void BeebView_ForceRepaint(HWND hWnd);
 BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName);
-void BeebView_SaveBitmap(HWND hWnd);
+void BeebView_SaveBitmapPrompt(HWND hWnd);
+void BeebView_SaveBitmap(HWND hWnd, char *saveFileName);
 int dispHeight(int bbcHeight);
 
 // Util functions
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 int WindowHeight(int iClientHeight);
 int WindowWidth();
+void deleteExtension(char *fileName);
