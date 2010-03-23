@@ -135,9 +135,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 {
-	char          *fileName   = NULL;
-	unsigned char screenMode  = DEFAULT_MODE;
-	bool          autoSave    = false;
+	char *fileName   = NULL;
+	int  screenMode  = -1;
+	bool autoSave    = false;
 	
 	// Process command line arguments
 	if(__argc > 1)
@@ -197,9 +197,9 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 
 		BeebView_LoadFile(hWnd, fileName);
 
-		if(screen != NULL)
+		// Set the mode if this was requested, and the image loaded okay
+		if(screenMode != -1 && screen != NULL)
 		{
-			// If the image was loaded okay, now set the mode
 			screen->setMode(screenMode);
 			BeebView_ForceRepaint(hWnd);
 		}
@@ -480,10 +480,41 @@ void BeebView_OpenFile(HWND hWnd)
 
 void BeebView_LoadFile(HWND hWnd, char *fileName)
 {
-	if(BeebView_LoadMemDump(hWnd, fileName))
-	{
-		BeebView_ForceRepaint(hWnd);
+	HANDLE hFileHandle;
+
+	// open the file
+	hFileHandle = CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
+
+	if(hFileHandle == INVALID_HANDLE_VALUE) {
+		int messageLen = strlen(fileName) + 41;
+		char *message = new char[messageLen];
+		sprintf_s(message, messageLen, "There was a problem opening the file \"%s\".", fileName);
+		MessageBox(hWnd, message, "File Error", MB_ICONEXCLAMATION | MB_OK);
+		delete []message;
+		return;
 	}
+
+	// Clean up the old screen object if there is one
+	if(screen != NULL)
+	{
+		delete screen;
+	}
+
+	int fileSize = GetFileSize(hFileHandle, NULL);
+
+	if(fileSize < BV_MEMDUMPMIN)
+	{
+		BeebView_LoadLdPic(hWnd, hFileHandle);
+	}
+	else
+	{
+		BeebView_LoadMemDump(hWnd, hFileHandle);
+	}
+
+	BeebView_ForceRepaint(hWnd);
+
+	// close the file
+	CloseHandle(hFileHandle);
 }
 
 void BeebView_ForceRepaint(HWND hWnd)
@@ -504,39 +535,19 @@ void BeebView_ForceRepaint(HWND hWnd)
 	InvalidateRect(hWnd, NULL, TRUE);
 }
 
-BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
+void BeebView_LoadMemDump(HWND hWnd, HANDLE hFileHandle)
 {
-	HANDLE hFileHandle;
-
-	// open the file
-	hFileHandle = CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
-
-	if(hFileHandle == INVALID_HANDLE_VALUE) {
-		int messageLen = strlen(fileName) + 41;
-		char *message = new char[messageLen];
-		sprintf_s(message, messageLen, "There was a problem opening the file \"%s\".", fileName);
-		MessageBox(hWnd, message, "File Error", MB_ICONEXCLAMATION | MB_OK);
-		delete []message;
-		return false;
-	}
-
 	// Initialise a new BbcScreen instance to store the data in
 	int fileSize = GetFileSize(hFileHandle, NULL);
-
-	if(screen != NULL)
-	{
-		delete screen;
-	}
-
 	screen = new BbcScreen(fileSize);
 
 	DWORD bytesRead = 0;
 	int writeAddr = 0;
-	unsigned char buffer[READBUF];
+	unsigned char buffer[BV_READBUF];
 
 	do
 	{
-		ReadFile(hFileHandle, &buffer, READBUF, &bytesRead, NULL);
+		ReadFile(hFileHandle, &buffer, BV_READBUF, &bytesRead, NULL);
 
 		for(unsigned int xfer = 0; xfer < bytesRead; xfer++)
 		{
@@ -544,9 +555,118 @@ BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
 			writeAddr++;
 		}
 	} while(bytesRead > 0);
+}
 
-	// close the file
-	CloseHandle(hFileHandle);
+bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
+{
+	// Initialise a new BbcScreen instance to store the data in
+	// TODO: Do this correctly for modes 4 & 5
+	screen = new BbcScreen(BV_MEMDUMPMIN);
+
+	DWORD bytesRead = 0;
+	int writeAddr = 0;
+
+	unsigned char outputValBits;
+	getBitsFromFile(hFileHandle, 8, &outputValBits);
+	// TODO: Check outputValBits is valid (e.g. greater than zero and less than or equal to 8)
+	// TODO: Retcode check
+
+	// Read the mode from the file
+	unsigned char mode;
+	getBitsFromFile(hFileHandle, 8, &mode);
+	// TODO: Check mode is valid
+	// TODO: Retcode check
+
+	screen->setMode(mode);
+
+	unsigned char fetchBits;
+
+	// Read the colour mappings from the file
+	for(int readPal = 15; readPal >= 0; readPal--)
+	{
+		getBitsFromFile(hFileHandle, 4, &fetchBits);
+		screen->setColour(readPal, fetchBits);
+		// TODO: Validate read colour?
+		// TODO: Retcode check
+	}
+
+	unsigned char stepSize;
+	getBitsFromFile(hFileHandle, 8, &stepSize);
+	// TODO: Check stepSize is valid?
+	// TODO: Retcode check
+
+	unsigned char repCountBits;
+	getBitsFromFile(hFileHandle, 8, &repCountBits);
+	// TODO: Check repCountBits is valid (e.g. greater than zero and less than or equal to 8)
+	// TODO: Retcode check
+
+	// Start in the highest step position and work backwards
+	int address = stepSize - 1;
+	int progPos = address;
+
+	unsigned char repeatCount;
+	unsigned char valToRepeat;
+
+	for(;;)
+	{
+		// The next bit of the file shows whether to read just a single
+		// value, or to read the number of repeats and a value 
+		if(getBitsFromFile(hFileHandle, 1, &fetchBits) == false)
+		{
+			// End of file
+			// TODO: Error message
+			break;
+		}
+
+		if(fetchBits == 0)
+		{
+			// Single value mode - only 1 repeat
+			repeatCount = 1;
+		}
+		else
+		{
+			// Fetch the number of times the value should be repeated
+			if(getBitsFromFile(hFileHandle, repCountBits, &repeatCount) == false)
+			{
+				// End of file
+				// TODO: Error message
+				break;
+			}
+		}
+
+		// Now fetch the value itself
+		if(getBitsFromFile(hFileHandle, outputValBits, &valToRepeat) == false)
+		{
+			// End of file
+			// TODO: Error message
+			break;
+		}
+
+		// TODO: Validate repeat count
+		assert(repeatCount > 0);
+
+		// Output the value(s) to the file
+		while(repeatCount > 0)
+		{
+			screen->setScreenByte(address, valToRepeat);
+			
+			address += stepSize;
+
+			// Reached the end of the address space, wrap around and
+			// store the previous step's values now
+			// TODO: Use actual address space for Modes 4 and 5
+			if(address >= BV_MEMDUMPMIN)
+			{
+				progPos--;
+
+				// TODO: Validate progPos >= 0
+
+				address = progPos;
+			}
+			
+			repeatCount--;
+		}
+	}
 
 	return true;
 }
@@ -686,4 +806,73 @@ void deleteExtension(char *fileName)
 		// Move the end of the string to where the dot is
 		*dotPos = '\0';
 	}
+}
+
+bool getBitsFromFile(HANDLE hFileHandle, int numBits, unsigned char *fileBits)
+{
+	*fileBits = 0;
+	unsigned char addBit;
+
+	// Must be between 1 and 8 bits that have been asked for
+	assert(numBits > 0 && numBits <= 8);
+
+	for(int bitCount = 0; bitCount < 8; bitCount++)
+	{
+		*fileBits = *fileBits >> 1;
+
+		if(bitCount < numBits)
+		{
+			if(getBitFromFile(hFileHandle, &addBit) == false)
+			{
+				return false;
+			}
+
+			*fileBits = *fileBits | (addBit << 7);
+		}
+	}
+
+	return true;
+}
+
+bool getBitFromFile(HANDLE hFileHandle, unsigned char *fileBit)
+{
+	static int filePos = 0;
+	static unsigned char byteStore;
+	static int  bitsLeft = 0;
+
+	if(bitsLeft == 0)
+	{
+		DWORD bytesRead = 0;
+		
+		if(ReadFile(hFileHandle, &byteStore, 1, &bytesRead, NULL) == 0)
+		{
+			assert(false);
+		}
+
+		filePos++;
+
+		if(bytesRead == 0)
+		{
+			// End of file
+			return false;
+		}
+
+		// TODO: Check ReadFile return code
+		// TODO: Check bytes read
+
+		bitsLeft = 8;
+	}
+
+	// Fetch the leftmost bit
+	*fileBit = (byteStore & 128) >> 7;
+
+	// Shift the remaining bits one place left
+	byteStore = byteStore << 1;
+
+	// Decrement the bytes left counter
+	bitsLeft --;
+
+	assert(*fileBit < 2 && *fileBit >= 0);
+
+	return true;
 }

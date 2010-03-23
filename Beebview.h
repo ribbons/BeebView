@@ -20,7 +20,8 @@
 
 #define BV_WIDTH  640           // width  of "screen" (client area)
 #define BV_DEFAULT_HEIGHT 512   // default height of "screen" (client area)
-#define READBUF 1024            // Buffer size for loading memory dump files
+#define BV_READBUF 1024         // Buffer size for loading memory dump files
+#define BV_MEMDUMPMIN 20 * 1024 // Usual minimum size for a memory dump type image
 
 #define LOADFILTER "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0"
 #define SAVEFILTER "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0"
@@ -46,7 +47,8 @@ void BeebView_CycleColour(int);
 void BeebView_OpenFile(HWND hWnd);
 void BeebView_LoadFile(HWND hWnd, char *fileName);
 void BeebView_ForceRepaint(HWND hWnd);
-BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName);
+void BeebView_LoadMemDump(HWND hWnd, HANDLE hFileHandle);
+bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle);
 void BeebView_SaveBitmapPrompt(HWND hWnd);
 void BeebView_SaveBitmap(HWND hWnd, char *saveFileName);
 int dispHeight(int bbcHeight);
@@ -56,3 +58,5 @@ BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 int WindowHeight(int iClientHeight);
 int WindowWidth();
 void deleteExtension(char *fileName);
+bool getBitsFromFile(HANDLE hFileHandle, int numBits, unsigned char *fileBits);
+bool getBitFromFile(HANDLE hFileHandle, unsigned char *fileBit);
