@@ -540,7 +540,7 @@ BOOL BeebView_LoadMemDump(HWND hWnd, char *fileName)
 
 		for(unsigned int xfer = 0; xfer < bytesRead; xfer++)
 		{
-			screen->setScreenBit(writeAddr, buffer[xfer]);
+			screen->setScreenByte(writeAddr, buffer[xfer]);
 			writeAddr++;
 		}
 	} while(bytesRead > 0);
