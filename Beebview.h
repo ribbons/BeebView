@@ -18,10 +18,11 @@
 
 #include "resource.h"
 
-#define BV_WIDTH  640           // width  of "screen" (client area)
-#define BV_DEFAULT_HEIGHT 512   // default height of "screen" (client area)
-#define BV_READBUF 1024         // Buffer size for loading memory dump files
-#define BV_MEMDUMPMIN 20 * 1024 // Usual minimum size for a memory dump type image
+#define BV_WIDTH          640    // width  of "screen" (client area)
+#define BV_DEFAULT_HEIGHT 512    // default height of "screen" (client area)
+#define BV_READBUF        1024   // Buffer size for loading memory dump files
+#define BV_MEMSIZE012     20480  // Screen memory size for modes 0, 1 & 2
+#define BV_MEMSIZE45      10240  // Screen memory size for modes 4 & 5
 
 #define LOADFILTER "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0"
 #define SAVEFILTER "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0"
@@ -58,5 +59,5 @@ BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
 int WindowHeight(int iClientHeight);
 int WindowWidth();
 void deleteExtension(char *fileName);
-bool getBitsFromFile(HANDLE hFileHandle, int numBits, unsigned char *fileBits);
-bool getBitFromFile(HANDLE hFileHandle, unsigned char *fileBit);
+bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned char *fileBits);
+bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit);

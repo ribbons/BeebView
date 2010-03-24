@@ -434,6 +434,7 @@ void BeebView_OnDestroy(HWND hWnd)
 	if(screen != NULL)
 	{
 		delete screen;
+		screen = NULL;
 	}
 
 	PostQuitMessage(0);
@@ -498,16 +499,20 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
 	if(screen != NULL)
 	{
 		delete screen;
+		screen = NULL;
 	}
 
-	int fileSize = GetFileSize(hFileHandle, NULL);
+	// Assume the file is LdPic format, and attempt to load it like that
+	if(!BeebView_LoadLdPic(hWnd, hFileHandle))
+	{
+		// File was not in LdPic format, clean up and load it as a memory dump
+		if(screen != NULL)
+		{
+			delete screen;
+			screen = NULL;
+		}
 
-	if(fileSize < BV_MEMDUMPMIN)
-	{
-		BeebView_LoadLdPic(hWnd, hFileHandle);
-	}
-	else
-	{
+		SetFilePointer(hFileHandle, 0, NULL, FILE_BEGIN);
 		BeebView_LoadMemDump(hWnd, hFileHandle);
 	}
 
@@ -559,66 +564,107 @@ void BeebView_LoadMemDump(HWND hWnd, HANDLE hFileHandle)
 
 bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
 {
-	// Initialise a new BbcScreen instance to store the data in
-	// TODO: Do this correctly for modes 4 & 5
-	screen = new BbcScreen(BV_MEMDUMPMIN);
+	unsigned char outValBitSize;
+	unsigned char mode;
+	unsigned char colMapping;
+	unsigned char stepSize;
+	unsigned char repCountBits;
+	unsigned char readMode;
+	unsigned char repeatCount;
+	unsigned char valToRepeat;
 
-	DWORD bytesRead = 0;
-	int writeAddr = 0;
+	// Read the number of bits to read for each image byte
+	if(!getBitsFromFile(hFileHandle, 8, true, &outValBitSize))
+	{
+		return false;
+	}
 
-	unsigned char outputValBits;
-	getBitsFromFile(hFileHandle, 8, &outputValBits);
-	// TODO: Check outputValBits is valid (e.g. greater than zero and less than or equal to 8)
-	// TODO: Retcode check
+	if(outValBitSize == 0 || outValBitSize > 8)
+	{
+		// As this is the number of bits to read, it can't be zero, and it can't be
+		// larger than eight, as that would overflow the single byte storage.
+		return false;
+	}
 
 	// Read the mode from the file
-	unsigned char mode;
-	getBitsFromFile(hFileHandle, 8, &mode);
-	// TODO: Check mode is valid
-	// TODO: Retcode check
+	if(!getBitsFromFile(hFileHandle, 8, false, &mode))
+	{
+		return false;
+	}
+	
+	int memSize;
 
+	switch(mode % 8)
+	{
+		case 0:
+		case 1:
+		case 2:
+			memSize = BV_MEMSIZE012;
+			break;
+		case 4:
+		case 5:
+			memSize = BV_MEMSIZE45;
+			break;
+		default:
+			// Modes 3, 6 & 7 are not supported
+			return false;
+	}
+
+	// Initialise a new BbcScreen instance and set the mode
+	screen = new BbcScreen(memSize);
 	screen->setMode(mode);
-
-	unsigned char fetchBits;
 
 	// Read the colour mappings from the file
 	for(int readPal = 15; readPal >= 0; readPal--)
 	{
-		getBitsFromFile(hFileHandle, 4, &fetchBits);
-		screen->setColour(readPal, fetchBits);
-		// TODO: Validate read colour?
-		// TODO: Retcode check
+		if(!getBitsFromFile(hFileHandle, 4, false, &colMapping))
+		{
+			return false;
+		}
+
+		screen->setColour(readPal, colMapping);
 	}
 
-	unsigned char stepSize;
-	getBitsFromFile(hFileHandle, 8, &stepSize);
-	// TODO: Check stepSize is valid?
-	// TODO: Retcode check
+	// Read the number of bytes to move forward by after each byte is written to memory
+	if(!getBitsFromFile(hFileHandle, 8, false, &stepSize))
+	{
+		return false;
+	}
 
-	unsigned char repCountBits;
-	getBitsFromFile(hFileHandle, 8, &repCountBits);
-	// TODO: Check repCountBits is valid (e.g. greater than zero and less than or equal to 8)
-	// TODO: Retcode check
+	if(stepSize == 0)
+	{
+		// This can't be zero, as only the first pixel would get written to
+		return false;
+	}
+
+	// Fetch the number of bits to read for each repeat count
+	if(!getBitsFromFile(hFileHandle, 8, false, &repCountBits))
+	{
+		return false;
+	}
+
+	if(repCountBits == 0 || repCountBits > 8)
+	{
+		// As this is the number of bits to read, it can't be zero, and it can't be
+		// larger than eight, as that would overflow the single byte storage.
+		return false;
+	}
 
 	// Start in the highest step position and work backwards
 	int address = stepSize - 1;
 	int progPos = address;
 
-	unsigned char repeatCount;
-	unsigned char valToRepeat;
-
 	for(;;)
 	{
 		// The next bit of the file shows whether to read just a single
 		// value, or to read the number of repeats and a value 
-		if(getBitsFromFile(hFileHandle, 1, &fetchBits) == false)
+		if(!getBitFromFile(hFileHandle, false, &readMode))
 		{
-			// End of file
-			// TODO: Error message
-			break;
+			// Unexpected end of file
+			return false;
 		}
 
-		if(fetchBits == 0)
+		if(readMode == 0)
 		{
 			// Single value mode - only 1 repeat
 			repeatCount = 1;
@@ -626,41 +672,50 @@ bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
 		else
 		{
 			// Fetch the number of times the value should be repeated
-			if(getBitsFromFile(hFileHandle, repCountBits, &repeatCount) == false)
+			if(!getBitsFromFile(hFileHandle, repCountBits, false, &repeatCount))
 			{
-				// End of file
-				// TODO: Error message
-				break;
+				// Unexpected end of file
+				return false;
+			}
+
+			if(repeatCount == 0)
+			{
+				// The value must be repeated at least once
+				return false;
 			}
 		}
 
 		// Now fetch the value itself
-		if(getBitsFromFile(hFileHandle, outputValBits, &valToRepeat) == false)
+		if(!getBitsFromFile(hFileHandle, outValBitSize, false, &valToRepeat))
 		{
-			// End of file
-			// TODO: Error message
-			break;
+			// Unexpected end of file
+			return false;
 		}
-
-		// TODO: Validate repeat count
-		assert(repeatCount > 0);
 
 		// Output the value(s) to the file
 		while(repeatCount > 0)
 		{
 			screen->setScreenByte(address, valToRepeat);
-			
 			address += stepSize;
 
 			// Reached the end of the address space, wrap around and
 			// store the previous step's values now
-			// TODO: Use actual address space for Modes 4 and 5
-			if(address >= BV_MEMDUMPMIN)
+			if(address >= memSize)
 			{
+				if(progPos == 0)
+				{
+					if(repeatCount > 1)
+					{
+						// Repeats are still remaining but the memory is full
+						return false;
+					}
+
+					// All of the screen memory has now had data loaded to it
+					return true;
+				}
+
+				// Move back to start filling in the next step of values
 				progPos--;
-
-				// TODO: Validate progPos >= 0
-
 				address = progPos;
 			}
 			
@@ -668,6 +723,7 @@ bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
 		}
 	}
 
+	// Unreachable, but keeps the compiler happy
 	return true;
 }
 
@@ -808,7 +864,7 @@ void deleteExtension(char *fileName)
 	}
 }
 
-bool getBitsFromFile(HANDLE hFileHandle, int numBits, unsigned char *fileBits)
+bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned char *fileBits)
 {
 	*fileBits = 0;
 	unsigned char addBit;
@@ -822,9 +878,14 @@ bool getBitsFromFile(HANDLE hFileHandle, int numBits, unsigned char *fileBits)
 
 		if(bitCount < numBits)
 		{
-			if(getBitFromFile(hFileHandle, &addBit) == false)
+			if(!getBitFromFile(hFileHandle, flushStore, &addBit))
 			{
 				return false;
+			}
+
+			if(flushStore)
+			{
+				flushStore = false;
 			}
 
 			*fileBits = *fileBits | (addBit << 7);
@@ -834,11 +895,15 @@ bool getBitsFromFile(HANDLE hFileHandle, int numBits, unsigned char *fileBits)
 	return true;
 }
 
-bool getBitFromFile(HANDLE hFileHandle, unsigned char *fileBit)
+bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
 {
-	static int filePos = 0;
 	static unsigned char byteStore;
-	static int  bitsLeft = 0;
+	static int bitsLeft = 0;
+
+	if(flushStore)
+	{
+		bitsLeft = 0;
+	}
 
 	if(bitsLeft == 0)
 	{
@@ -848,8 +913,6 @@ bool getBitFromFile(HANDLE hFileHandle, unsigned char *fileBit)
 		{
 			assert(false);
 		}
-
-		filePos++;
 
 		if(bytesRead == 0)
 		{
