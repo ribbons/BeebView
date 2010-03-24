@@ -786,11 +786,6 @@ void BeebView_SaveBitmap(HWND hWnd, char *saveFileName)
 	ReleaseDC(hWnd, screenDC);
 }
 
-int dispHeight(int bbcHeight)
-{
-	return bbcHeight * 2;
-}
-
 // Utility Functions -------------------------------------------------------------------------------
 
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent) 
@@ -847,6 +842,11 @@ int WindowHeight(int iClientHeight) {
 
 int WindowWidth() {
 	return BV_WIDTH + (GetSystemMetrics(SM_CXFIXEDFRAME)*2);
+}
+
+int dispHeight(int bbcHeight)
+{
+	return bbcHeight * 2;
 }
 
 void deleteExtension(char *fileName)

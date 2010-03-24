@@ -52,12 +52,12 @@ void BeebView_LoadMemDump(HANDLE hFileHandle);
 bool BeebView_LoadLdPic(HANDLE hFileHandle);
 void BeebView_SaveBitmapPrompt(HWND hWnd);
 void BeebView_SaveBitmap(HWND hWnd, char *saveFileName);
-int dispHeight(int bbcHeight);
 
 // Util functions
 BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
-int WindowHeight(int iClientHeight);
-int WindowWidth();
+int  WindowHeight(int iClientHeight);
+int  WindowWidth();
+int  dispHeight(int bbcHeight);
 void deleteExtension(char *fileName);
 bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned char *fileBits);
 bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit);
