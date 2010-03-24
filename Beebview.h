@@ -44,12 +44,12 @@ void BeebView_OnDestroy(HWND hWnd);
 
 // BeebView functions
 void BeebView_UpdateTitle(HWND);
-void BeebView_CycleColour(int);
+void BeebView_CycleColour(unsigned char colour);
 void BeebView_OpenFile(HWND hWnd);
 void BeebView_LoadFile(HWND hWnd, char *fileName);
 void BeebView_ForceRepaint(HWND hWnd);
-void BeebView_LoadMemDump(HWND hWnd, HANDLE hFileHandle);
-bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle);
+void BeebView_LoadMemDump(HANDLE hFileHandle);
+bool BeebView_LoadLdPic(HANDLE hFileHandle);
 void BeebView_SaveBitmapPrompt(HWND hWnd);
 void BeebView_SaveBitmap(HWND hWnd, char *saveFileName);
 int dispHeight(int bbcHeight);

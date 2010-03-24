@@ -29,7 +29,7 @@ char      currentFileTitle[MAX_PATH] = "";
 BbcScreen *screen = NULL;
 
 
-int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE /* hPrevInstance */, LPTSTR /* lpCmdLine */, int nCmdShow)
 {
  	MSG msg;
 	HACCEL hAccelTable;
@@ -128,12 +128,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
-	return 0;
 }
 
 // Message Handler Functions -----------------------------------------------------------------------
 
-BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
+BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* /* lpCreateStruct */)
 {
 	char *fileName   = NULL;
 	int  screenMode  = -1;
@@ -235,7 +234,7 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct)
 	return TRUE;
 }
 
-void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu)
+void BeebView_OnInitMenuPopup(HWND /* hwnd */, HMENU hMenu, UINT /* item */, BOOL /* fSystemMenu */)
 {
 	if(screen == NULL)
 	{
@@ -266,7 +265,7 @@ void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMen
 		EnableMenuItem(hMenu, IDM_MODE5, MF_ENABLED);
 
 		// Set a radio check next to the menu item for the current mode.
-		UINT checkItem;
+		UINT checkItem = 0;
 
 		switch(screen->getMode())
 		{
@@ -326,7 +325,7 @@ void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMen
 	}
 }
 
-void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
+void BeebView_OnCommand(HWND hWnd, int id, HWND /* hwndCtl */, UINT /* codeNotify */)
 {
 	// Parse the menu selections:
 	switch (id)
@@ -428,7 +427,7 @@ void BeebView_OnPaint(HWND hWnd)
 	EndPaint(hWnd, &PaintStruct);
 }
 
-void BeebView_OnDestroy(HWND hWnd)
+void BeebView_OnDestroy(HWND /* hWnd */)
 {
 	// Clean up the screen object if it exists
 	if(screen != NULL)
@@ -443,7 +442,7 @@ void BeebView_OnDestroy(HWND hWnd)
 // BeebView Code -----------------------------------------------------------------------------------
 
 // Cycle a colour in the palette
-void BeebView_CycleColour(int colour)
+void BeebView_CycleColour(unsigned char colour)
 {
 	screen->setColour(colour, (screen->getColour(colour) + 1) % 8);
 }
@@ -503,7 +502,7 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
 	}
 
 	// Assume the file is LdPic format, and attempt to load it like that
-	if(!BeebView_LoadLdPic(hWnd, hFileHandle))
+	if(!BeebView_LoadLdPic(hFileHandle))
 	{
 		// File was not in LdPic format, clean up and load it as a memory dump
 		if(screen != NULL)
@@ -513,7 +512,7 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
 		}
 
 		SetFilePointer(hFileHandle, 0, NULL, FILE_BEGIN);
-		BeebView_LoadMemDump(hWnd, hFileHandle);
+		BeebView_LoadMemDump(hFileHandle);
 	}
 
 	BeebView_ForceRepaint(hWnd);
@@ -540,7 +539,7 @@ void BeebView_ForceRepaint(HWND hWnd)
 	InvalidateRect(hWnd, NULL, TRUE);
 }
 
-void BeebView_LoadMemDump(HWND hWnd, HANDLE hFileHandle)
+void BeebView_LoadMemDump(HANDLE hFileHandle)
 {
 	// Initialise a new BbcScreen instance to store the data in
 	int fileSize = GetFileSize(hFileHandle, NULL);
@@ -562,7 +561,7 @@ void BeebView_LoadMemDump(HWND hWnd, HANDLE hFileHandle)
 	} while(bytesRead > 0);
 }
 
-bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
+bool BeebView_LoadLdPic(HANDLE hFileHandle)
 {
 	unsigned char outValBitSize;
 	unsigned char mode;
@@ -622,7 +621,7 @@ bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
 			return false;
 		}
 
-		screen->setColour(readPal, colMapping);
+		screen->setColour((unsigned char)readPal, (unsigned char)colMapping);
 	}
 
 	// Read the number of bytes to move forward by after each byte is written to memory
@@ -722,9 +721,6 @@ bool BeebView_LoadLdPic(HWND hWnd, HANDLE hFileHandle)
 			repeatCount--;
 		}
 	}
-
-	// Unreachable, but keeps the compiler happy
-	return true;
 }
 
 void BeebView_SaveBitmapPrompt(HWND hWnd)
