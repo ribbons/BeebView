@@ -23,7 +23,6 @@
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
-#pragma code_page(1252)
 #endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
@@ -142,7 +141,7 @@ FILETYPE 0x1
 {
 BLOCK "StringFileInfo"
 {
-	BLOCK "000004b0"
+	BLOCK "080904b0"
 	{
 		VALUE "Comments", "Utility to view and save graphics files originally created on BBC Micro or Master Computers."
 		VALUE "CompanyName", "www.nerdoftheherd.com"
@@ -159,7 +158,7 @@ BLOCK "StringFileInfo"
 
 BLOCK "VarFileInfo"
 {
-	VALUE "Translation", 0x0000 0x04B0
+	VALUE "Translation", 0x0809 0x04B0
 }
 }
 
