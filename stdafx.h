@@ -29,3 +29,4 @@
 #include <tchar.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdexcept>

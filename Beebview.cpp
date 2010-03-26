@@ -866,24 +866,31 @@ bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned 
 	unsigned char addBit;
 
 	// Must be between 1 and 8 bits that have been asked for
-	assert(numBits > 0 && numBits <= 8);
+	if(numBits < 1 || numBits > 8)
+	{
+		throw std::invalid_argument("numBits must be between 1 and 8");
+	}
 
 	for(int bitCount = 0; bitCount < 8; bitCount++)
 	{
+		// Shift the bits in the byte one place to the right
 		*fileBits = *fileBits >> 1;
 
 		if(bitCount < numBits)
 		{
 			if(!getBitFromFile(hFileHandle, flushStore, &addBit))
 			{
+				// End of file
 				return false;
 			}
 
 			if(flushStore)
 			{
+				// The store has now been flushed, so reset the flag
 				flushStore = false;
 			}
 
+			// Insert the returned bit as the msb of the byte
 			*fileBits = *fileBits | (addBit << 7);
 		}
 	}
@@ -898,6 +905,7 @@ bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
 
 	if(flushStore)
 	{
+		// Clear the count of remaining bits
 		bitsLeft = 0;
 	}
 
@@ -905,9 +913,10 @@ bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
 	{
 		DWORD bytesRead = 0;
 		
+		// Fetch a byte from the file
 		if(ReadFile(hFileHandle, &byteStore, 1, &bytesRead, NULL) == 0)
 		{
-			assert(false);
+			throw std::runtime_error("ReadFile returned an error");
 		}
 
 		if(bytesRead == 0)
@@ -915,9 +924,6 @@ bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
 			// End of file
 			return false;
 		}
-
-		// TODO: Check ReadFile return code
-		// TODO: Check bytes read
 
 		bitsLeft = 8;
 	}
@@ -930,8 +936,6 @@ bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
 
 	// Decrement the bytes left counter
 	bitsLeft --;
-
-	assert(*fileBit < 2 && *fileBit >= 0);
 
 	return true;
 }
