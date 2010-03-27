@@ -73,7 +73,6 @@ void About_InitDialog(HWND hDlg)
 	SendMessage (GetDlgItem (hDlg, IDC_URL), WM_SETFONT, (WPARAM)CreateFont(lfHeight, 0, 0, 0, 0, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "MS Shell Dlg"), FALSE);
 	
 	// Set the cursor for the url style label
-	HCURSOR hCursor;
-	hCursor = LoadCursor(NULL, IDC_HAND);
-	SetClassLong(GetDlgItem (hDlg, IDC_URL), GCL_HCURSOR, (LONG)hCursor);
+	HCURSOR hCursor = LoadCursor(NULL, IDC_HAND);
+	SetClassLongPtr(GetDlgItem(hDlg, IDC_URL), GCLP_HCURSOR, (LONG_PTR)hCursor);
 }

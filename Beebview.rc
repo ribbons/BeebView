@@ -21,9 +21,7 @@
 // English (U.K.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //

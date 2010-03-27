@@ -210,7 +210,7 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* /* lpCreateStruct */)
 		// Only attempt to save a file if one was loaded
 		if(screen != NULL)
 		{
-			int saveNameLen = strlen(fileName) + 4;
+			size_t saveNameLen = strlen(fileName) + 4;
 			char *saveName = new char[saveNameLen];
 			strcpy_s(saveName, saveNameLen, fileName);
 
@@ -486,7 +486,7 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
 	hFileHandle = CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
 
 	if(hFileHandle == INVALID_HANDLE_VALUE) {
-		int messageLen = strlen(fileName) + 41;
+		size_t messageLen = strlen(fileName) + 41;
 		char *message = new char[messageLen];
 		sprintf_s(message, messageLen, "There was a problem opening the file \"%s\".", fileName);
 		MessageBox(hWnd, message, "File Error", MB_ICONEXCLAMATION | MB_OK);
@@ -524,7 +524,7 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
 void BeebView_ForceRepaint(HWND hWnd)
 {
 	// Update the window title bar
-	int titleLen = strlen(szAppName) + 14 + strlen(currentFileTitle);
+	size_t titleLen = strlen(szAppName) + 14 + strlen(currentFileTitle);
 	char *windowTitle = new char[titleLen];
 	sprintf_s(windowTitle, titleLen, "%s - %s  [MODE %d]", szAppName, currentFileTitle, screen->getMode());
 	SetWindowText(hWnd, windowTitle);
