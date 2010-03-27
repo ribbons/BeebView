@@ -3,13 +3,26 @@ title Creating Zipped Source
 
 set tempfolder="%temp%\Beebview"
 
-rem create the temp folder if it doesn't already exist
-if not exist %tempfolder% mkdir %tempfolder%
+rem Delete the temp folder if already exists
+if exist %tempfolder% rmdir /S /Q %tempfolder%
+if ERRORLEVEL 1 goto failed
 
-rem copy all of the files across that are needed, but try and miss out the files that can be easily re-created.
-robocopy .\ %tempfolder% /MIR /XD .svn Debug Release /XF Beebview.ncb Beebview.vcproj.*.*.user Beebview.suo
+rem Copy the versioned files across to the temp folder
+svn export . %tempfolder%
+if ERRORLEVEL 1 goto failed
 
 rem make sure that 7za.exe is on the PATH.
 7za a -tzip "%userprofile%\Desktop\Beebview Source.zip" %tempfolder%
+if ERRORLEVEL 1 goto failed
 
 rmdir /S /Q %tempfolder%
+if ERRORLEVEL 1 goto failed
+
+goto :EOF
+
+:failed
+
+echo.
+echo Source zipping failed - review above output for more details
+
+pause
