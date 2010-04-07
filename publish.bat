@@ -76,7 +76,7 @@ echo Please install it and then try running this script again
 
 pause
 
-goto exit
+goto :EOF
 
 :signfailed
 
