@@ -41,7 +41,7 @@ void BbcScreenWidget::setScreen(BbcScreen *screen)
     image.setColor(6, qRgb(0,   255, 255));
     image.setColor(7, qRgb(255, 255, 255));
 
-    for(unsigned char i = 8; i < PALETTE_SIZE; i++)
+    for(unsigned char i = 8; i < BbcScreen::PALETTE_SIZE; i++)
     {
         // Map flashing colours to grey
         image.setColor(i, qRgb(128, 128, 128));
