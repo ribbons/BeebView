@@ -11,6 +11,7 @@ Matt Robinson
 * Support for long (e.g. Wapping Editor) images
 * LdPic format support
 * 64-bit build
+* Port to Qt
 
 David Robinson
 --------------

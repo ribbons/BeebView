@@ -1,6 +1,6 @@
 /*
  * This file is part of BBC Graphics Viewer.
- * Copyright © 2003-2010 by the authors - see the AUTHORS file for details.
+ * Copyright © 2003-2016 by the authors - see the AUTHORS file for details.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,48 +18,52 @@
 
 #pragma once
 
-#include "resource.h"
+#include <QActionGroup>
+#include <QMainWindow>
 
-#define BV_WIDTH          640    // width  of "screen" (client area)
-#define BV_DEFAULT_HEIGHT 512    // default height of "screen" (client area)
-#define BV_READBUF        1024   // Buffer size for loading memory dump files
+#include "BbcScreenWidget.h"
+#include "BbcScreen.h"
+
+namespace Ui {
+    class Beebview;
+}
+
+class Beebview : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit Beebview(QStringList args, QWidget *parent = 0);
+    ~Beebview();
+
+private slots:
+    void on_menuFile_aboutToShow();
+    void on_menuMode_aboutToShow();
+    void on_menuCycleColour_aboutToShow();
+    void on_actionOpen_triggered(bool checked);
+    void on_actionSaveAs_triggered(bool checked);
+    void modesGroup_triggered(QAction *action);
+    void coloursGroup_triggered(QAction *action);
+    void on_actionReportBug_triggered(bool checked);
+    void on_actionHelp_triggered(bool checked);
+    void on_actionAbout_triggered(bool checked);
+
+private:
+    void LoadFile(QString fileName);
+    void UpdateInfo();
+    void LoadMemDump(std::ifstream &file);
+    bool LoadLdPic(std::ifstream &file);
+    bool getBitsFromFile(std::ifstream &file, int numBits, bool flushStore, unsigned char *fileBits);
+    bool getBitFromFile(std::ifstream &file, bool flushStore, unsigned char *fileBit);
+    void SaveAs(QString fileName);
+
+    Ui::Beebview *ui;
+    QActionGroup modesGroup;
+    QActionGroup coloursGroup;
+    BbcScreenWidget *image;
+    BbcScreen *screen = NULL;
+    QString currentFileTitle;
+};
+
 #define BV_MEMSIZE012     20480  // Screen memory size for modes 0, 1 & 2
 #define BV_MEMSIZE45      10240  // Screen memory size for modes 4 & 5
-
-#define LOADFILTER "BBC Graphics Files (*.bbg)\0*.bbg\0All Files (*.*)\0*.*\0"
-#define SAVEFILTER "Windows Bitmap (*.bmp)\0*.bmp\0All Files (*.*)\0*.*\0"
-
-// Application global variables
-extern HINSTANCE hInst; // current instance
-
-// Standard Windows application functions
-ATOM				MyRegisterClass(HINSTANCE hInstance);
-BOOL				InitInstance(HINSTANCE, int);
-LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
-
-// Message Handler functions
-BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* lpCreateStruct);
-void BeebView_OnInitMenuPopup(HWND hwnd, HMENU hMenu, UINT item, BOOL fSystemMenu);
-void BeebView_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify);
-void BeebView_OnPaint(HWND hWnd);
-void BeebView_OnDestroy(HWND hWnd);
-
-// BeebView functions
-void BeebView_UpdateTitle(HWND);
-void BeebView_CycleColour(unsigned char colour);
-void BeebView_OpenFile(HWND hWnd);
-void BeebView_LoadFile(HWND hWnd, char *fileName);
-void BeebView_ForceRepaint(HWND hWnd);
-void BeebView_LoadMemDump(HANDLE hFileHandle);
-bool BeebView_LoadLdPic(HANDLE hFileHandle);
-void BeebView_SaveBitmapPrompt(HWND hWnd);
-void BeebView_SaveBitmap(HWND hWnd, char *saveFileName);
-
-// Util functions
-BOOL CenterWindow (HWND hwndChild, HWND hwndParent);
-int  WindowHeight(int iClientHeight);
-int  WindowWidth();
-int  dispHeight(int bbcHeight);
-void deleteExtension(char *fileName);
-bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned char *fileBits);
-bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit);

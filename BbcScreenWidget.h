@@ -1,6 +1,6 @@
 /*
  * This file is part of BBC Graphics Viewer.
- * Copyright © 2003-2010 by the authors - see the AUTHORS file for details.
+ * Copyright © 2016 by the authors - see the AUTHORS file for details.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,17 +18,28 @@
 
 #pragma once
 
-#define STRICT                  // Enable strict type checking
-#define WIN32_LEAN_AND_MEAN     // Exclude rarely-used stuff from Windows headers
+#include <QWidget>
 
-#include <windows.h>            // Windows Headers
-#include <windowsx.h>           // Strict macro and message crackers etc
-#include <shellapi.h>           // For ShellExecute etc
-#include <commdlg.h>            // Common Dialogs
+#include "BbcScreen.h"
 
-#include <stdlib.h>
-#include <malloc.h>
-#include <tchar.h>
-#include <assert.h>
-#include <stdio.h>
-#include <stdexcept>
+class BbcScreenWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    const int dispWidth = 640;  // Width to display the BBC screen
+    const int defHeight = 512;  // default height of "screen" (client area)
+    const int heightRatio = 2;  // Ratio to multiply height of screen for display
+
+    explicit BbcScreenWidget(QWidget *parent = 0);
+    void setScreen(BbcScreen *screen);
+    bool saveAs(QString fileName);
+
+protected:
+    void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
+
+private:
+    void pixelCallback(int x, int y, unsigned long colour);
+
+    QImage image;
+};

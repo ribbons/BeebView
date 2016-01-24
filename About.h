@@ -1,6 +1,6 @@
 /*
  * This file is part of BBC Graphics Viewer.
- * Copyright © 2007-2010 by the authors - see the AUTHORS file for details.
+ * Copyright © 2016 by the authors - see the AUTHORS file for details.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,20 @@
 
 #pragma once
 
-#include "resource.h"
+#include <QDialog>
 
-// Dialog message handler
-LRESULT CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+namespace Ui {
+    class About;
+}
 
-// Specific message handlers
-void About_InitDialog(HWND hDlg);
+class About : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit About(QWidget *parent = 0);
+    ~About();
+
+private:
+    Ui::About *ui;
+};

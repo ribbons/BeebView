@@ -1,6 +1,6 @@
 /*
  * This file is part of BBC Graphics Viewer.
- * Copyright © 2003-2010 by the authors - see the AUTHORS file for details.
+ * Copyright © 2016 by the authors - see the AUTHORS file for details.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stdafx.h"
+#include "Beebview.h"
+#include <QApplication>
 
-// Put other includes in stdafx.h
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    Beebview mainWin(app.arguments());
+    mainWin.show();
+
+    return app.exec();
+}

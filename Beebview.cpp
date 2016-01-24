@@ -1,6 +1,6 @@
 /*
  * This file is part of BBC Graphics Viewer.
- * Copyright © 2003-2010 by the authors - see the AUTHORS file for details.
+ * Copyright © 2003-2016 by the authors - see the AUTHORS file for details.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,193 +16,110 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "stdafx.h"
-#include "Beebview.h"
-#include "BbcScreen.h"
-#include "Bitmap.h"
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QTimer>
+#include <QUrl>
+
+#include <fstream>
+
 #include "About.h"
-#define MAX_LOADSTRING 100
+#include "Beebview.h"
+#include "ui_Beebview.h"
 
-// Global Variables:
-HINSTANCE hInst;                         // current instance
-TCHAR     szAppName[MAX_LOADSTRING];     // The title bar text
-TCHAR     szWindowClass[MAX_LOADSTRING]; // the main window class name
-char      currentFileTitle[MAX_PATH] = "";
-BbcScreen *screen = NULL;
-
-
-int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE /* hPrevInstance */, LPTSTR /* lpCmdLine */, int nCmdShow)
+Beebview::Beebview(QStringList args, QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::Beebview),
+    modesGroup(this),
+    coloursGroup(this)
 {
-    MSG msg;
-    HACCEL hAccelTable;
+    ui->setupUi(this);
+    QApplication::setWindowIcon(QIcon(":Graphics/BeebView.png"));
 
-    // Initialize global strings
-    LoadString(hInstance, IDS_APP_TITLE, szAppName, MAX_LOADSTRING);
-    LoadString(hInstance, IDC_BEEBVIEW, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
-
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
+    for(int i = 0; i < 6 ; i++)
     {
-        return FALSE;
-    }
-
-    hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_BEEBVIEW);
-
-    // Main message loop:
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        if(i == 3)
         {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            continue;
         }
+
+        QAction *action = new QAction(tr("Mode &%1").arg(i), this);
+        action->setCheckable(true);
+        action->setData(i);
+
+        modesGroup.addAction(action);
+        ui->menuMode->addAction(action);
     }
 
-    return (int) msg.wParam;
-}
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEX wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = (WNDPROC)WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, (LPCTSTR)IDI_BEEBVIEW);
-    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = GetStockBrush(BLACK_BRUSH);
-    wcex.lpszMenuName   = (LPCTSTR)IDC_BEEBVIEW;
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
-
-    return RegisterClassEx(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HANDLE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   HWND hWnd;
-
-   hInst = hInstance; // Store instance handle in our global variable
-
-   hWnd = CreateWindow(szWindowClass, szAppName, WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-      CW_USEDEFAULT, 0, WindowWidth(), WindowHeight(BV_DEFAULT_HEIGHT), NULL, NULL, hInstance, NULL);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
+    for(int i = 0; i < 8; i++)
     {
-        HANDLE_MSG(hWnd, WM_CREATE,        BeebView_OnCreate);
-        HANDLE_MSG(hWnd, WM_INITMENUPOPUP, BeebView_OnInitMenuPopup);
-        HANDLE_MSG(hWnd, WM_COMMAND,       BeebView_OnCommand);
-        HANDLE_MSG(hWnd, WM_PAINT,         BeebView_OnPaint);
-        HANDLE_MSG(hWnd, WM_DESTROY,       BeebView_OnDestroy);
-        default:
-            return DefWindowProc(hWnd, message, wParam, lParam);
+        QAction *action = new QAction(tr("Colour &%1").arg(i), this);
+        action->setData(i);
+
+        coloursGroup.addAction(action);
+        ui->menuCycleColour->addAction(action);
     }
-}
 
-// Message Handler Functions -----------------------------------------------------------------------
+    QObject::connect(&modesGroup, &QActionGroup::triggered, this, &Beebview::modesGroup_triggered);
+    QObject::connect(&coloursGroup, &QActionGroup::triggered, this, &Beebview::coloursGroup_triggered);
+    QObject::connect(ui->actionExit, &QAction::triggered, this, &Beebview::close);
 
-BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* /* lpCreateStruct */)
-{
-    char *fileName   = NULL;
-    int  screenMode  = -1;
-    bool autoSave    = false;
+    image = new BbcScreenWidget();
+    this->setCentralWidget(image);
+    this->setFixedSize(this->sizeHint());
+    this->UpdateInfo();
+
+    QString fileName;
+    char screenMode = -1;
+    bool autoSave = false;
 
     // Process command line arguments
-    if(__argc > 1)
-    {
-        for(int checkArgs = 1; checkArgs < __argc; checkArgs++)
-        {
-            char *thisArg = __argv[checkArgs];
+    args.removeFirst();
 
-            if(strcmp(thisArg, "--save") == 0 )
-            {
-                autoSave = true;
-            }
-            else if(strcmp(thisArg, "--mode0") == 0 )
-            {
-                screenMode = 0;
-            }
-            else if(strcmp(thisArg, "--mode1") == 0 )
-            {
-                screenMode = 1;
-            }
-            else if(strcmp(thisArg, "--mode2") == 0 )
-            {
-                screenMode = 2;
-            }
-            else if(strcmp(thisArg, "--mode4") == 0 )
-            {
-                screenMode = 4;
-            }
-            else if(strcmp(thisArg, "--mode5") == 0 )
-            {
-                screenMode = 5;
-            }
-            else
-            {
-                // As this doesn't match any switches, assume it is a filename
-                fileName = thisArg;
-            }
+    foreach (const QString &arg, args)
+    {
+        if(arg == "--save")
+        {
+            autoSave = true;
         }
-    }
-
-    if(fileName != NULL)
-    {
-        // Extract the file name from the file path for the window title
-        char *lastSlash = strrchr(fileName, '\\');
-
-        if(lastSlash == NULL)
+        else if(arg == "--mode0")
         {
-            strcpy_s(currentFileTitle, fileName);
+            screenMode = 0;
+        }
+        else if(arg == "--mode1")
+        {
+            screenMode = 1;
+        }
+        else if(arg == "--mode2")
+        {
+            screenMode = 2;
+        }
+        else if(arg == "--mode4")
+        {
+            screenMode = 4;
+        }
+        else if(arg == "--mode5")
+        {
+            screenMode = 5;
         }
         else
         {
-            strcpy_s(currentFileTitle, lastSlash + 1);
+            // As this doesn't match any switches, assume it is a filename
+            fileName = arg;
         }
+    }
 
-        // Remove the file extension in the title if there is one
-        deleteExtension(currentFileTitle);
-
-        BeebView_LoadFile(hWnd, fileName);
+    if(!fileName.isEmpty())
+    {
+        LoadFile(fileName);
 
         // Set the mode if this was requested, and the image loaded okay
         if(screenMode != -1 && screen != NULL)
         {
             screen->setMode(screenMode);
-            BeebView_ForceRepaint(hWnd);
+            image->setScreen(screen);
+            this->UpdateInfo();
         }
     }
 
@@ -212,288 +129,152 @@ BOOL BeebView_OnCreate(HWND hWnd, CREATESTRUCT FAR* /* lpCreateStruct */)
         // Only attempt to save a file if one was loaded
         if(screen != NULL)
         {
-            size_t saveNameLen = strlen(fileName) + 4;
-            char *saveName = new char[saveNameLen];
-            strcpy_s(saveName, saveNameLen, fileName);
-
-            // Remove the file extension if there is one
-            deleteExtension(saveName);
-
-            // Append .bmp to the save filename
-            strcat_s(saveName, saveNameLen, ".bmp");
-
-            // Save the image
-            BeebView_SaveBitmap(hWnd, saveName);
-
-            // Clean up the save filename
-            delete []saveName;
+            QFileInfo info(fileName);
+            SaveAs(info.path() + QDir::separator() + info.completeBaseName() + ".bmp");
         }
 
         // Close the program
-        DestroyWindow(hWnd);
+        QTimer::singleShot(0, this, &Beebview::close);
     }
-
-    return TRUE;
 }
 
-void BeebView_OnInitMenuPopup(HWND /* hwnd */, HMENU hMenu, UINT /* item */, BOOL /* fSystemMenu */)
+void Beebview::on_menuFile_aboutToShow()
 {
-    if(screen == NULL)
-    {
-        // Gray out the menu options as no image is loaded
-        EnableMenuItem(hMenu, IDM_SAVEAS, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_MODE0, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_MODE1, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_MODE2, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_MODE4, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_MODE5, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL0, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL1, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL2, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL3, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
-        EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
-    }
-    else
-    {
-        // Enable the Save As and Mode selection
-        EnableMenuItem(hMenu, IDM_SAVEAS, MF_ENABLED);
-        EnableMenuItem(hMenu, IDM_MODE0, MF_ENABLED);
-        EnableMenuItem(hMenu, IDM_MODE1, MF_ENABLED);
-        EnableMenuItem(hMenu, IDM_MODE2, MF_ENABLED);
-        EnableMenuItem(hMenu, IDM_MODE4, MF_ENABLED);
-        EnableMenuItem(hMenu, IDM_MODE5, MF_ENABLED);
+    ui->actionSaveAs->setEnabled(screen != NULL);
+}
 
-        // Set a radio check next to the menu item for the current mode.
-        UINT checkItem = 0;
+void Beebview::on_menuMode_aboutToShow()
+{
+    modesGroup.setEnabled(screen != NULL);
+
+    if(screen != NULL)
+    {
+        int checkItem = -1;
 
         switch(screen->getMode())
         {
             case 0:
-                checkItem = IDM_MODE0;
+                checkItem = 0;
                 break;
             case 1:
-                checkItem = IDM_MODE1;
+                checkItem = 1;
                 break;
             case 2:
-                checkItem = IDM_MODE2;
+                checkItem = 2;
                 break;
             case 4:
-                checkItem = IDM_MODE4;
+                checkItem = 3;
                 break;
             case 5:
-                checkItem = IDM_MODE5;
+                checkItem = 4;
                 break;
         }
 
-        CheckMenuRadioItem(hMenu, IDM_MODE0, IDM_MODE5, checkItem, MF_BYCOMMAND);
-
-        // Enable the applicable colour cycle options for the current mode
-        EnableMenuItem(hMenu, IDM_COL0, MF_ENABLED);
-
-        switch(screen->getMode()) {
-            case 0:
-            case 4:
-                EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL2, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL3, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
-                break;
-            case 1:
-            case 5:
-                EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL4, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL5, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL6, MF_GRAYED);
-                EnableMenuItem(hMenu, IDM_COL7, MF_GRAYED);
-                break;
-            case 2:
-                EnableMenuItem(hMenu, IDM_COL1, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL2, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL3, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL4, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL5, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL6, MF_ENABLED);
-                EnableMenuItem(hMenu, IDM_COL7, MF_ENABLED);
-                break;
-        }
+        modesGroup.actions()[checkItem]->setChecked(true);
     }
 }
 
-void BeebView_OnCommand(HWND hWnd, int id, HWND /* hwndCtl */, UINT /* codeNotify */)
+void Beebview::on_menuCycleColour_aboutToShow()
 {
-    // Parse the menu selections:
-    switch (id)
-    {
-        case IDM_OPEN:
-            BeebView_OpenFile(hWnd);
-            break;
-        case IDM_SAVEAS:
-            BeebView_SaveBitmapPrompt(hWnd);
-            break;
-        case IDM_EXIT:
-            DestroyWindow(hWnd);
-            break;
-        case IDM_MODE0:
-            screen->setMode(0);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_MODE1:
-            screen->setMode(1);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_MODE2:
-            screen->setMode(2);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_MODE4:
-            screen->setMode(4);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_MODE5:
-            screen->setMode(5);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL0:
-            BeebView_CycleColour(0);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL1:
-            BeebView_CycleColour(1);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL2:
-            BeebView_CycleColour(2);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL3:
-            BeebView_CycleColour(3);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL4:
-            BeebView_CycleColour(4);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL5:
-            BeebView_CycleColour(5);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL6:
-            BeebView_CycleColour(6);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_COL7:
-            BeebView_CycleColour(7);
-            BeebView_ForceRepaint(hWnd);
-            break;
-        case IDM_HELP:
-            ShellExecute(NULL, "open", "http://www.nerdoftheherd.com/tools/beebview/help/", NULL, NULL, SW_SHOWNORMAL);
-            break;
-        case IDM_REPORTBUG:
-            ShellExecute(NULL, "open", "http://www.nerdoftheherd.com/tools/beebview/bug_report.php", NULL, NULL, SW_SHOWNORMAL);
-            break;
-        case IDM_ABOUT:
-            DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
-            break;
-    }
-}
-
-void BeebView_OnPaint(HWND hWnd)
-{
-    PAINTSTRUCT PaintStruct;
-
-    // begin paint & get the handle of the screen DC
-    HDC screenDC = BeginPaint(hWnd, &PaintStruct);
+    coloursGroup.setEnabled(screen != NULL);
 
     if(screen != NULL)
     {
-        // Create a DC for the bitmap & select bitmap
-        HDC bitmapDC = CreateCompatibleDC(screenDC);
-        HBITMAP oldBitmap = SelectBitmap(bitmapDC, screen->getBitmap());
-
-        // paint the bitmap
-        StretchBlt(screenDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), bitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
-
-        // select previous bitmap & release the DC
-        SelectBitmap(bitmapDC, oldBitmap);
-        DeleteDC(bitmapDC);
+        switch(screen->getMode())
+        {
+            case 0:
+            case 4:
+                coloursGroup.actions()[2]->setEnabled(false);
+                coloursGroup.actions()[3]->setEnabled(false);
+                coloursGroup.actions()[4]->setEnabled(false);
+                coloursGroup.actions()[5]->setEnabled(false);
+                coloursGroup.actions()[6]->setEnabled(false);
+                coloursGroup.actions()[7]->setEnabled(false);
+                break;
+            case 1:
+            case 5:
+                coloursGroup.actions()[2]->setEnabled(true);
+                coloursGroup.actions()[3]->setEnabled(true);
+                coloursGroup.actions()[4]->setEnabled(false);
+                coloursGroup.actions()[5]->setEnabled(false);
+                coloursGroup.actions()[6]->setEnabled(false);
+                coloursGroup.actions()[7]->setEnabled(false);
+                break;
+            case 2:
+                coloursGroup.actions()[2]->setEnabled(true);
+                coloursGroup.actions()[3]->setEnabled(true);
+                coloursGroup.actions()[4]->setEnabled(true);
+                coloursGroup.actions()[5]->setEnabled(true);
+                coloursGroup.actions()[6]->setEnabled(true);
+                coloursGroup.actions()[7]->setEnabled(true);
+                break;
+        }
     }
-
-    EndPaint(hWnd, &PaintStruct);
 }
 
-void BeebView_OnDestroy(HWND /* hWnd */)
+void Beebview::modesGroup_triggered(QAction *action)
 {
+    screen->setMode(action->data().toInt());
+    image->setScreen(screen);
+    this->UpdateInfo();
+}
+
+void Beebview::on_actionReportBug_triggered(bool checked)
+{
+    QDesktopServices::openUrl(QUrl("https://nerdoftheherd.com/tools/beebview/bug_report.php"));
+}
+
+void Beebview::on_actionHelp_triggered(bool checked)
+{
+    QDesktopServices::openUrl(QUrl("https://nerdoftheherd.com/tools/beebview/help/"));
+}
+
+void Beebview::on_actionAbout_triggered(bool checked)
+{
+    About *about = new About(this);
+    about->show();
+}
+
+Beebview::~Beebview()
+{
+    delete ui;
+
     // Clean up the screen object if it exists
     if(screen != NULL)
     {
         delete screen;
         screen = NULL;
     }
-
-    PostQuitMessage(0);
 }
 
-// BeebView Code -----------------------------------------------------------------------------------
-
-// Cycle a colour in the palette
-void BeebView_CycleColour(unsigned char colour)
+void Beebview::coloursGroup_triggered(QAction *action)
 {
+    unsigned char colour = action->data().toInt();
     screen->setColour(colour, (screen->getColour(colour) + 1) % 8);
+    image->setScreen(screen);
 }
 
-void BeebView_OpenFile(HWND hWnd)
+void Beebview::on_actionOpen_triggered(bool checked)
 {
-    char fileName[MAX_PATH] = "";
-    char fileTitle[MAX_PATH] = "";
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open file"),
+        QString(), tr("BBC Graphics Files (*.bbg);;All Files (*)"));
 
-    OPENFILENAME opfil;
-    memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
-    opfil.lStructSize = sizeof(opfil);
-    opfil.hwndOwner = hWnd;
-    opfil.hInstance = NULL;               //application instance
-    opfil.lpstrFilter = LOADFILTER;       //filter of files separated by \0
-    opfil.lpstrFile = fileName;           //absolute path of filename
-    opfil.nMaxFile = MAX_PATH;            //length of filename buffer
-    opfil.lpstrFileTitle = fileTitle;     //filename with no path
-    opfil.nMaxFileTitle = MAX_PATH;       //length of filename buffer
-    opfil.lpstrTitle = "Open file";       //title of dialog box
-    opfil.Flags = OFN_HIDEREADONLY;       //optional flags
-
-    int result = GetOpenFileName(&opfil);
-
-    if(result != 0)
+    if(!fileName.isNull())
     {
-        // Remove the file extension from the title if there is one
-        deleteExtension(fileTitle);
-
-        strcpy_s(currentFileTitle, fileTitle);
-
-        BeebView_LoadFile(hWnd, fileName);
+        LoadFile(fileName);
+        this->UpdateInfo();
     }
 }
 
-void BeebView_LoadFile(HWND hWnd, char *fileName)
+void Beebview::LoadFile(QString fileName)
 {
-    HANDLE hFileHandle;
+    std::ifstream file;
+    file.open(fileName.toStdString().c_str(), std::ifstream::binary);
 
-    // open the file
-    hFileHandle = CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, NULL, NULL);
-
-    if(hFileHandle == INVALID_HANDLE_VALUE) {
-        size_t messageLen = strlen(fileName) + 41;
-        char *message = new char[messageLen];
-        sprintf_s(message, messageLen, "There was a problem opening the file \"%s\".", fileName);
-        MessageBox(hWnd, message, "File Error", MB_ICONEXCLAMATION | MB_OK);
-        delete []message;
-        return;
+    if(!file)
+    {
+        QMessageBox::critical(this, tr("File Error"),
+            tr("There was a problem opening the file \"%1\".").arg(fileName));
     }
 
     // Clean up the old screen object if there is one
@@ -504,7 +285,7 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
     }
 
     // Assume the file is LdPic format, and attempt to load it like that
-    if(!BeebView_LoadLdPic(hFileHandle))
+    if(!LoadLdPic(file))
     {
         // File was not in LdPic format, clean up and load it as a memory dump
         if(screen != NULL)
@@ -513,57 +294,55 @@ void BeebView_LoadFile(HWND hWnd, char *fileName)
             screen = NULL;
         }
 
-        SetFilePointer(hFileHandle, 0, NULL, FILE_BEGIN);
-        BeebView_LoadMemDump(hFileHandle);
+        file.seekg(0);
+        LoadMemDump(file);
     }
 
-    BeebView_ForceRepaint(hWnd);
+    image->setScreen(screen);
+    this->setFixedSize(this->sizeHint());
 
-    // close the file
-    CloseHandle(hFileHandle);
+    QFileInfo info(fileName);
+    currentFileTitle = info.completeBaseName(); // File name minus path and extension
 }
 
-void BeebView_ForceRepaint(HWND hWnd)
+void Beebview::UpdateInfo()
 {
-    // Update the window title bar
-    size_t titleLen = strlen(szAppName) + 14 + strlen(currentFileTitle);
-    char *windowTitle = new char[titleLen];
-    sprintf_s(windowTitle, titleLen, "%s - %s  [MODE %d]", szAppName, currentFileTitle, screen->getMode());
-    SetWindowText(hWnd, windowTitle);
-    delete []windowTitle;
+    QString title = tr("BBC Graphics Viewer");
 
-    screen->generateBitmap(hWnd);
+    if(screen != NULL)
+    {
+        title.append(tr(" - %1  [MODE %2]")
+            .arg(currentFileTitle, QString::number(screen->getMode())));
+    }
 
-    // Resize the window
-    SetWindowPos(hWnd, NULL, 0, 0, WindowWidth(), WindowHeight(dispHeight(screen->getScreenHeight())), SWP_NOMOVE | SWP_NOZORDER);
-
-    // Invalidate the client area to force a repaint
-    InvalidateRect(hWnd, NULL, TRUE);
+    this->setWindowTitle(title);
 }
 
-void BeebView_LoadMemDump(HANDLE hFileHandle)
+void Beebview::LoadMemDump(std::ifstream &file)
 {
-    // Initialise a new BbcScreen instance to store the data in
-    int fileSize = GetFileSize(hFileHandle, NULL);
+    file.seekg(0, std::ifstream::end);
+    int fileSize = file.tellg();
     screen = new BbcScreen(fileSize);
 
-    DWORD bytesRead = 0;
+    file.seekg(0, std::ifstream::beg);
+
     int writeAddr = 0;
-    unsigned char buffer[BV_READBUF];
 
-    do
+    for(;;)
     {
-        ReadFile(hFileHandle, &buffer, BV_READBUF, &bytesRead, NULL);
+        int readVal = file.get();
 
-        for(unsigned int xfer = 0; xfer < bytesRead; xfer++)
+        if(readVal == EOF)
         {
-            screen->setScreenByte(writeAddr, buffer[xfer]);
-            writeAddr++;
+            break;
         }
-    } while(bytesRead > 0);
+
+        screen->setScreenByte(writeAddr, readVal);
+        writeAddr++;
+    }
 }
 
-bool BeebView_LoadLdPic(HANDLE hFileHandle)
+bool Beebview::LoadLdPic(std::ifstream &file)
 {
     unsigned char outValBitSize;
     unsigned char mode;
@@ -575,7 +354,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     unsigned char valToRepeat;
 
     // Read the number of bits to read for each image byte
-    if(!getBitsFromFile(hFileHandle, 8, true, &outValBitSize))
+    if(!getBitsFromFile(file, 8, true, &outValBitSize))
     {
         return false;
     }
@@ -588,7 +367,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     }
 
     // Read the mode from the file
-    if(!getBitsFromFile(hFileHandle, 8, false, &mode))
+    if(!getBitsFromFile(file, 8, false, &mode))
     {
         return false;
     }
@@ -618,7 +397,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     // Read the colour mappings from the file
     for(int readPal = 15; readPal >= 0; readPal--)
     {
-        if(!getBitsFromFile(hFileHandle, 4, false, &colMapping))
+        if(!getBitsFromFile(file, 4, false, &colMapping))
         {
             return false;
         }
@@ -627,7 +406,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     }
 
     // Read the number of bytes to move forward by after each byte is written to memory
-    if(!getBitsFromFile(hFileHandle, 8, false, &stepSize))
+    if(!getBitsFromFile(file, 8, false, &stepSize))
     {
         return false;
     }
@@ -639,7 +418,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     }
 
     // Fetch the number of bits to read for each repeat count
-    if(!getBitsFromFile(hFileHandle, 8, false, &repCountBits))
+    if(!getBitsFromFile(file, 8, false, &repCountBits))
     {
         return false;
     }
@@ -659,7 +438,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     {
         // The next bit of the file shows whether to read just a single
         // value, or to read the number of repeats and a value
-        if(!getBitFromFile(hFileHandle, false, &readMode))
+        if(!getBitFromFile(file, false, &readMode))
         {
             // Unexpected end of file
             return false;
@@ -673,7 +452,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
         else
         {
             // Fetch the number of times the value should be repeated
-            if(!getBitsFromFile(hFileHandle, repCountBits, false, &repeatCount))
+            if(!getBitsFromFile(file, repCountBits, false, &repeatCount))
             {
                 // Unexpected end of file
                 return false;
@@ -687,7 +466,7 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
         }
 
         // Now fetch the value itself
-        if(!getBitsFromFile(hFileHandle, outValBitSize, false, &valToRepeat))
+        if(!getBitsFromFile(file, outValBitSize, false, &valToRepeat))
         {
             // Unexpected end of file
             return false;
@@ -725,144 +504,27 @@ bool BeebView_LoadLdPic(HANDLE hFileHandle)
     }
 }
 
-void BeebView_SaveBitmapPrompt(HWND hWnd)
+void Beebview::on_actionSaveAs_triggered(bool checked)
 {
-    char saveFileName[MAX_PATH] = "";
-    char saveFileTitle[MAX_PATH] = "";
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+        QString(), tr("Portable Network Graphics (*.png);;Windows Bitmap (*.bmp)"));
 
-    // Set the default file name
-    strcpy_s(saveFileName, currentFileTitle);
-
-    // Show the save as dialog
-    OPENFILENAME opfil;
-    memset((LPOPENFILENAME)&opfil,0,sizeof(opfil));
-    opfil.lStructSize = sizeof(opfil);
-    opfil.hwndOwner = hWnd;
-    opfil.hInstance = NULL;                  //application instance
-    opfil.lpstrFilter = SAVEFILTER;          //filter of files separated by \0
-    opfil.lpstrFile = saveFileName;          //absolute path of filename
-    opfil.nMaxFile = MAX_PATH;               //length of filename buffer
-    opfil.lpstrFileTitle = saveFileTitle;    //filename with no path
-    opfil.nMaxFileTitle = MAX_PATH;          //length of filename buffer
-    opfil.lpstrDefExt = "bmp";               //Default file extension
-    opfil.lpstrTitle = "Save As";            //title of dialog box
-    opfil.Flags = OFN_HIDEREADONLY;          //optional flags
-    int result = GetSaveFileName(&opfil);
-
-    if(result == 0)
+    if(!fileName.isNull())
     {
-        return;
-    }
-
-    BeebView_SaveBitmap(hWnd, saveFileName);
-}
-
-void BeebView_SaveBitmap(HWND hWnd, char *saveFileName)
-{
-    // Get the handle of the screen DC
-    HDC screenDC = GetDC(hWnd);
-
-    // Create a DC for the bitmap & select it
-    HDC bitmapDC = CreateCompatibleDC(screenDC);
-    HBITMAP oldBitmap = SelectBitmap(bitmapDC, screen->getBitmap());
-
-    // Create a compatible bitmap for the resized image
-    HBITMAP sizedBitmap = CreateCompatibleBitmap(screenDC, BV_WIDTH, dispHeight(screen->getScreenHeight()));
-
-    // Create a DC for the resized image bitmap & select it
-    HDC sizedDC = CreateCompatibleDC(screenDC);
-    SelectBitmap(sizedDC, sizedBitmap);
-
-    // Resize the bitmap to the output size
-    StretchBlt(sizedDC, 0, 0, BV_WIDTH, dispHeight(screen->getScreenHeight()), bitmapDC, 0, 0, screen->getScreenWidth(), screen->getScreenHeight(), SRCCOPY);
-
-    // Save the bitmap
-    bmp::SaveBmp(sizedDC, saveFileName, true);
-
-    // Select the original bitmap
-    SelectBitmap(bitmapDC, oldBitmap);
-
-    // Release the DCs
-    DeleteDC(bitmapDC);
-    DeleteDC(sizedDC);
-    ReleaseDC(hWnd, screenDC);
-}
-
-// Utility Functions -------------------------------------------------------------------------------
-
-BOOL CenterWindow (HWND hwndChild, HWND hwndParent)
-{
-        RECT    rChild, rParent;
-        int     wChild, hChild, wParent, hParent;
-        int     wScreen, hScreen, xNew, yNew;
-        HDC     hdc;
-
-
-        // Get the Height and Width of the child window
-        GetWindowRect (hwndChild, &rChild);
-        wChild = rChild.right - rChild.left;
-        hChild = rChild.bottom - rChild.top;
-
-
-        // Get the Height and Width of the parent window
-        GetWindowRect (hwndParent, &rParent);
-        wParent = rParent.right - rParent.left;
-        hParent = rParent.bottom - rParent.top;
-
-
-        // Get the display limits
-        hdc = GetDC (hwndChild);
-        wScreen = GetDeviceCaps (hdc, HORZRES);
-        hScreen = GetDeviceCaps (hdc, VERTRES);
-        ReleaseDC (hwndChild, hdc);
-
-
-        // Calculate new X position, then adjust for screen
-        xNew = rParent.left + ((wParent - wChild) /2);
-        if (xNew < 0) {
-                xNew = 0;
-        } else if ((xNew+wChild) > wScreen) {
-                xNew = wScreen - wChild;
-        }
-
-
-        // Calculate new Y position, then adjust for screen
-        yNew = rParent.top  + ((hParent - hChild) /2);
-        if (yNew < 0) {
-                yNew = 0;
-        } else if ((yNew+hChild) > hScreen) {
-                yNew = hScreen - hChild;
-        }
-
-        // Set it, and return
-        return SetWindowPos (hwndChild, NULL, xNew, yNew, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-}
-
-int WindowHeight(int iClientHeight) {
-    return iClientHeight + GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYMENU) + (GetSystemMetrics(SM_CYFIXEDFRAME)*2);
-}
-
-int WindowWidth() {
-    return BV_WIDTH + (GetSystemMetrics(SM_CXFIXEDFRAME)*2);
-}
-
-int dispHeight(int bbcHeight)
-{
-    return bbcHeight * 2;
-}
-
-void deleteExtension(char *fileName)
-{
-    // Find the last full stop in the filename if there is one
-    char *dotPos = strrchr(fileName, '.');
-
-    if(dotPos != NULL) {
-        // Move the end of the string to where the dot is
-        *dotPos = '\0';
+        SaveAs(fileName);
     }
 }
 
-bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned char *fileBits)
+void Beebview::SaveAs(QString fileName)
+{
+    if(!image->saveAs(fileName))
+    {
+        QMessageBox::critical(this, tr("File Error"),
+            tr("Unable to save to \"%1\", please check the name and try again.").arg(fileName));
+    }
+}
+
+bool Beebview::getBitsFromFile(std::ifstream &file, int numBits, bool flushStore, unsigned char *fileBits)
 {
     *fileBits = 0;
     unsigned char addBit;
@@ -880,7 +542,7 @@ bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned 
 
         if(bitCount < numBits)
         {
-            if(!getBitFromFile(hFileHandle, flushStore, &addBit))
+            if(!getBitFromFile(file, flushStore, &addBit))
             {
                 // End of file
                 return false;
@@ -900,7 +562,7 @@ bool getBitsFromFile(HANDLE hFileHandle, int numBits, bool flushStore, unsigned 
     return true;
 }
 
-bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
+bool Beebview::getBitFromFile(std::ifstream &file, bool flushStore, unsigned char *fileBit)
 {
     static unsigned char byteStore;
     static int bitsLeft = 0;
@@ -913,20 +575,16 @@ bool getBitFromFile(HANDLE hFileHandle, bool flushStore, unsigned char *fileBit)
 
     if(bitsLeft == 0)
     {
-        DWORD bytesRead = 0;
-
         // Fetch a byte from the file
-        if(ReadFile(hFileHandle, &byteStore, 1, &bytesRead, NULL) == 0)
-        {
-            throw std::runtime_error("ReadFile returned an error");
-        }
+        int readVal = file.get();
 
-        if(bytesRead == 0)
+        if(readVal == EOF)
         {
             // End of file
             return false;
         }
 
+        byteStore = readVal;
         bitsLeft = 8;
     }
 
