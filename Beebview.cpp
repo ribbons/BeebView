@@ -249,7 +249,7 @@ Beebview::~Beebview()
 
 void Beebview::coloursGroup_triggered(QAction *action)
 {
-    unsigned char colour = action->data().toInt();
+    uint8_t colour = action->data().toInt();
     screen->setColour(colour, (screen->getColour(colour) + 1) % 8);
     image->setScreen(screen);
 }
@@ -344,14 +344,14 @@ void Beebview::LoadMemDump(std::ifstream &file)
 
 bool Beebview::LoadLdPic(std::ifstream &file)
 {
-    unsigned char outValBitSize;
-    unsigned char mode;
-    unsigned char colMapping;
-    unsigned char stepSize;
-    unsigned char repCountBits;
-    unsigned char readMode;
-    unsigned char repeatCount;
-    unsigned char valToRepeat;
+    uint8_t outValBitSize;
+    uint8_t mode;
+    uint8_t colMapping;
+    uint8_t stepSize;
+    uint8_t repCountBits;
+    uint8_t readMode;
+    uint8_t repeatCount;
+    uint8_t valToRepeat;
 
     // Read the number of bits to read for each image byte
     if(!getBitsFromFile(file, 8, true, &outValBitSize))
@@ -395,14 +395,14 @@ bool Beebview::LoadLdPic(std::ifstream &file)
     screen->setMode(mode);
 
     // Read the colour mappings from the file
-    for(int readPal = 15; readPal >= 0; readPal--)
+    for(int8_t readPal = 15; readPal >= 0; readPal--)
     {
         if(!getBitsFromFile(file, 4, false, &colMapping))
         {
             return false;
         }
 
-        screen->setColour((unsigned char)readPal, (unsigned char)colMapping);
+        screen->setColour(readPal, colMapping);
     }
 
     // Read the number of bytes to move forward by after each byte is written to memory
@@ -524,10 +524,10 @@ void Beebview::SaveAs(QString fileName)
     }
 }
 
-bool Beebview::getBitsFromFile(std::ifstream &file, int numBits, bool flushStore, unsigned char *fileBits)
+bool Beebview::getBitsFromFile(std::ifstream &file, int numBits, bool flushStore, uint8_t *fileBits)
 {
     *fileBits = 0;
-    unsigned char addBit;
+    uint8_t addBit;
 
     // Must be between 1 and 8 bits that have been asked for
     if(numBits < 1 || numBits > 8)
@@ -555,16 +555,16 @@ bool Beebview::getBitsFromFile(std::ifstream &file, int numBits, bool flushStore
             }
 
             // Insert the returned bit as the msb of the byte
-            *fileBits = *fileBits | (addBit << 7);
+            *fileBits = *fileBits | addBit << 7;
         }
     }
 
     return true;
 }
 
-bool Beebview::getBitFromFile(std::ifstream &file, bool flushStore, unsigned char *fileBit)
+bool Beebview::getBitFromFile(std::ifstream &file, bool flushStore, uint8_t *fileBit)
 {
-    static unsigned char byteStore;
+    static uint8_t byteStore;
     static int bitsLeft = 0;
 
     if(flushStore)

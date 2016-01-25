@@ -39,7 +39,7 @@ protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
 
 private:
-    void pixelCallback(int x, int y, unsigned long colour);
+    void pixelCallback(int x, int y, uint8_t colour);
 
     QImage image;
 };
