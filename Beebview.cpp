@@ -22,9 +22,9 @@
 #include <QTimer>
 #include <QUrl>
 
-#include <fstream>
-
 #include "About.h"
+#include "BbcImageLoader.h"
+
 #include "Beebview.h"
 #include "ui_Beebview.h"
 
@@ -268,13 +268,14 @@ void Beebview::on_actionOpen_triggered(bool checked)
 
 void Beebview::LoadFile(QString fileName)
 {
-    std::ifstream file;
-    file.open(fileName.toStdString().c_str(), std::ifstream::binary);
+    QFile file(fileName);
 
-    if(!file)
+    if(!file.open(QIODevice::ReadOnly))
     {
         QMessageBox::critical(this, tr("File Error"),
             tr("There was a problem opening the file \"%1\".").arg(fileName));
+
+        return;
     }
 
     // Clean up the old screen object if there is one
@@ -284,19 +285,10 @@ void Beebview::LoadFile(QString fileName)
         screen = NULL;
     }
 
-    // Assume the file is LdPic format, and attempt to load it like that
-    if(!LoadLdPic(file))
-    {
-        // File was not in LdPic format, clean up and load it as a memory dump
-        if(screen != NULL)
-        {
-            delete screen;
-            screen = NULL;
-        }
+    uint8_t *data = file.map(0, file.size());
+    BbcImageLoader loader(data, file.size());
 
-        file.seekg(0);
-        LoadMemDump(file);
-    }
+    screen = loader.LoadAuto();
 
     image->setScreen(screen);
     this->setFixedSize(this->sizeHint());
@@ -318,192 +310,6 @@ void Beebview::UpdateInfo()
     this->setWindowTitle(title);
 }
 
-void Beebview::LoadMemDump(std::ifstream &file)
-{
-    file.seekg(0, std::ifstream::end);
-    int fileSize = file.tellg();
-    screen = new BbcScreen(fileSize);
-
-    file.seekg(0, std::ifstream::beg);
-
-    int writeAddr = 0;
-
-    for(;;)
-    {
-        int readVal = file.get();
-
-        if(readVal == EOF)
-        {
-            break;
-        }
-
-        screen->setScreenByte(writeAddr, readVal);
-        writeAddr++;
-    }
-}
-
-bool Beebview::LoadLdPic(std::ifstream &file)
-{
-    uint8_t outValBitSize;
-    uint8_t mode;
-    uint8_t colMapping;
-    uint8_t stepSize;
-    uint8_t repCountBits;
-    uint8_t readMode;
-    uint8_t repeatCount;
-    uint8_t valToRepeat;
-
-    // Read the number of bits to read for each image byte
-    if(!getBitsFromFile(file, 8, true, &outValBitSize))
-    {
-        return false;
-    }
-
-    if(outValBitSize == 0 || outValBitSize > 8)
-    {
-        // As this is the number of bits to read, it can't be zero, and it can't be
-        // larger than eight, as that would overflow the single byte storage.
-        return false;
-    }
-
-    // Read the mode from the file
-    if(!getBitsFromFile(file, 8, false, &mode))
-    {
-        return false;
-    }
-
-    int memSize;
-
-    switch(mode % 8)
-    {
-        case 0:
-        case 1:
-        case 2:
-            memSize = BV_MEMSIZE012;
-            break;
-        case 4:
-        case 5:
-            memSize = BV_MEMSIZE45;
-            break;
-        default:
-            // Modes 3, 6 & 7 are not supported
-            return false;
-    }
-
-    // Initialise a new BbcScreen instance and set the mode
-    screen = new BbcScreen(memSize);
-    screen->setMode(mode);
-
-    // Read the colour mappings from the file
-    for(int8_t readPal = 15; readPal >= 0; readPal--)
-    {
-        if(!getBitsFromFile(file, 4, false, &colMapping))
-        {
-            return false;
-        }
-
-        screen->setColour(readPal, colMapping);
-    }
-
-    // Read the number of bytes to move forward by after each byte is written to memory
-    if(!getBitsFromFile(file, 8, false, &stepSize))
-    {
-        return false;
-    }
-
-    if(stepSize == 0)
-    {
-        // This can't be zero, as only the first pixel would get written to
-        return false;
-    }
-
-    // Fetch the number of bits to read for each repeat count
-    if(!getBitsFromFile(file, 8, false, &repCountBits))
-    {
-        return false;
-    }
-
-    if(repCountBits == 0 || repCountBits > 8)
-    {
-        // As this is the number of bits to read, it can't be zero, and it can't be
-        // larger than eight, as that would overflow the single byte storage.
-        return false;
-    }
-
-    // Start in the highest step position and work backwards
-    int address = stepSize - 1;
-    int progPos = address;
-
-    for(;;)
-    {
-        // The next bit of the file shows whether to read just a single
-        // value, or to read the number of repeats and a value
-        if(!getBitFromFile(file, false, &readMode))
-        {
-            // Unexpected end of file
-            return false;
-        }
-
-        if(readMode == 0)
-        {
-            // Single value mode - only 1 repeat
-            repeatCount = 1;
-        }
-        else
-        {
-            // Fetch the number of times the value should be repeated
-            if(!getBitsFromFile(file, repCountBits, false, &repeatCount))
-            {
-                // Unexpected end of file
-                return false;
-            }
-
-            if(repeatCount == 0)
-            {
-                // The value must be repeated at least once
-                return false;
-            }
-        }
-
-        // Now fetch the value itself
-        if(!getBitsFromFile(file, outValBitSize, false, &valToRepeat))
-        {
-            // Unexpected end of file
-            return false;
-        }
-
-        // Output the value(s) to the file
-        while(repeatCount > 0)
-        {
-            screen->setScreenByte(address, valToRepeat);
-            address += stepSize;
-
-            // Reached the end of the address space, wrap around and
-            // store the previous step's values now
-            if(address >= memSize)
-            {
-                if(progPos == 0)
-                {
-                    if(repeatCount > 1)
-                    {
-                        // Repeats are still remaining but the memory is full
-                        return false;
-                    }
-
-                    // All of the screen memory has now had data loaded to it
-                    return true;
-                }
-
-                // Move back to start filling in the next step of values
-                progPos--;
-                address = progPos;
-            }
-
-            repeatCount--;
-        }
-    }
-}
-
 void Beebview::on_actionSaveAs_triggered(bool checked)
 {
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
@@ -522,80 +328,4 @@ void Beebview::SaveAs(QString fileName)
         QMessageBox::critical(this, tr("File Error"),
             tr("Unable to save to \"%1\", please check the name and try again.").arg(fileName));
     }
-}
-
-bool Beebview::getBitsFromFile(std::ifstream &file, int numBits, bool flushStore, uint8_t *fileBits)
-{
-    *fileBits = 0;
-    uint8_t addBit;
-
-    // Must be between 1 and 8 bits that have been asked for
-    if(numBits < 1 || numBits > 8)
-    {
-        throw std::invalid_argument("numBits must be between 1 and 8");
-    }
-
-    for(int bitCount = 0; bitCount < 8; bitCount++)
-    {
-        // Shift the bits in the byte one place to the right
-        *fileBits = *fileBits >> 1;
-
-        if(bitCount < numBits)
-        {
-            if(!getBitFromFile(file, flushStore, &addBit))
-            {
-                // End of file
-                return false;
-            }
-
-            if(flushStore)
-            {
-                // The store has now been flushed, so reset the flag
-                flushStore = false;
-            }
-
-            // Insert the returned bit as the msb of the byte
-            *fileBits = *fileBits | addBit << 7;
-        }
-    }
-
-    return true;
-}
-
-bool Beebview::getBitFromFile(std::ifstream &file, bool flushStore, uint8_t *fileBit)
-{
-    static uint8_t byteStore;
-    static int bitsLeft = 0;
-
-    if(flushStore)
-    {
-        // Clear the count of remaining bits
-        bitsLeft = 0;
-    }
-
-    if(bitsLeft == 0)
-    {
-        // Fetch a byte from the file
-        int readVal = file.get();
-
-        if(readVal == EOF)
-        {
-            // End of file
-            return false;
-        }
-
-        byteStore = readVal;
-        bitsLeft = 8;
-    }
-
-    // Fetch the leftmost bit
-    *fileBit = (byteStore & 128) >> 7;
-
-    // Shift the remaining bits one place left
-    byteStore = byteStore << 1;
-
-    // Decrement the bytes left counter
-    bitsLeft --;
-
-    return true;
 }

@@ -31,6 +31,7 @@ endif()
 add_executable(beebview
                main.cpp About.h About.cpp Beebview.h Beebview.cpp
                BbcScreenWidget.h BbcScreenWidget.cpp
+               BbcImageLoader.h BbcImageLoader.cpp
                BbcScreen.h BbcScreen.cpp Beebview.qrc)
 
 TARGET_LINK_LIBRARIES(beebview Qt5::Widgets)

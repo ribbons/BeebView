@@ -51,10 +51,6 @@ private slots:
 private:
     void LoadFile(QString fileName);
     void UpdateInfo();
-    void LoadMemDump(std::ifstream &file);
-    bool LoadLdPic(std::ifstream &file);
-    bool getBitsFromFile(std::ifstream &file, int numBits, bool flushStore, unsigned char *fileBits);
-    bool getBitFromFile(std::ifstream &file, bool flushStore, unsigned char *fileBit);
     void SaveAs(QString fileName);
 
     Ui::Beebview *ui;
@@ -64,6 +60,3 @@ private:
     BbcScreen *screen = NULL;
     QString currentFileTitle;
 };
-
-#define BV_MEMSIZE012     20480  // Screen memory size for modes 0, 1 & 2
-#define BV_MEMSIZE45      10240  // Screen memory size for modes 4 & 5
