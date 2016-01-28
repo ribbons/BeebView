@@ -278,6 +278,14 @@ void Beebview::LoadFile(QString fileName)
         return;
     }
 
+    if(file.size() > BbcScreen::MAX_MEMSIZE)
+    {
+        QMessageBox::critical(this, tr("File Error"),
+            tr("\"%1\" is too large to be a BBC graphics file.").arg(fileName));
+
+        return;
+    }
+
     // Clean up the old screen object if there is one
     if(screen != NULL)
     {
