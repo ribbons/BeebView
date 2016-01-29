@@ -21,8 +21,9 @@
 #include <QActionGroup>
 #include <QMainWindow>
 
+#include <BbcScreen.h>
+
 #include "BbcScreenWidget.h"
-#include "BbcScreen.h"
 
 namespace Ui {
     class Beebview;

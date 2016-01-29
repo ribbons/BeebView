@@ -22,9 +22,9 @@
 #include <QTimer>
 #include <QUrl>
 
-#include "About.h"
-#include "BbcImageLoader.h"
+#include <BbcImageLoader.h>
 
+#include "About.h"
 #include "Beebview.h"
 #include "ui_Beebview.h"
 

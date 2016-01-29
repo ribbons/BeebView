@@ -24,14 +24,24 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Qt5Widgets REQUIRED)
 
+find_path(BEEBIMAGE_HEADERS NAMES "BbcScreen.h" "BbcImageLoader.h")
+
+if(NOT BEEBIMAGE_HEADERS)
+    message(FATAL_ERROR "libbeebimage headers could not be found")
+endif()
+
+find_library(BEEBIMAGE_LIB beebimage)
+
+if(NOT BEEBIMAGE_LIB)
+    message(FATAL_ERROR "libbeebimage could not be found")
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 endif()
 
 add_executable(beebview
                main.cpp About.h About.cpp Beebview.h Beebview.cpp
-               BbcScreenWidget.h BbcScreenWidget.cpp
-               BbcImageLoader.h BbcImageLoader.cpp
-               BbcScreen.h BbcScreen.cpp Beebview.qrc)
+               BbcScreenWidget.h BbcScreenWidget.cpp Beebview.qrc)
 
-TARGET_LINK_LIBRARIES(beebview Qt5::Widgets)
+target_link_libraries(beebview Qt5::Widgets beebimage)

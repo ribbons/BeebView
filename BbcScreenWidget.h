@@ -20,7 +20,7 @@
 
 #include <QWidget>
 
-#include "BbcScreen.h"
+#include <BbcScreen.h>
 
 class BbcScreenWidget : public QWidget
 {
