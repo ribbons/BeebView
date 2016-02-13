@@ -119,6 +119,7 @@ Beebview::Beebview(QStringList args, QWidget *parent) :
         {
             screen->setMode(screenMode);
             image->setScreen(screen);
+            this->setFixedSize(this->sizeHint());
             this->UpdateInfo();
         }
     }
@@ -216,6 +217,7 @@ void Beebview::modesGroup_triggered(QAction *action)
 {
     screen->setMode(action->data().toInt());
     image->setScreen(screen);
+    this->setFixedSize(this->sizeHint());
     this->UpdateInfo();
 }
 
