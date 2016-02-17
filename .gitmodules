@@ -1,0 +1,4 @@
+[submodule "libbeebimage"]
+	path = libbeebimage
+	url = https://github.com/ribbons/libbeebimage
+	branch = master
