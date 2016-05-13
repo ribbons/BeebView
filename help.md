@@ -1,30 +1,27 @@
 # BBC Graphics Viewer Help
 
 
-## Introduction
+## Synopsis
 
-BBC Graphics Viewer is a utility for viewing and converting BBC graphics files
-on Windows PCs.
+`beebview [ --mode`*modenum* ] [ [ `--save` ] *file* ]
 
 
-## Installation
+## Description
 
-Simply unzip the contents of the zip file into a convenient location.  If you
-don't have a suitable program for this, you might like to use
-[7zip](http://www.7-zip.org/).
-
+BBC Graphics Viewer is a utility for viewing and converting graphics files
+originally created on BBC Micro or Master Computers.
 
 ## Usage
 
 Although when the image files are originally transferred from the BBC they do
 not have an extension, BBC Graphics Viewer is designed with the assumption in
-mind that the files have been renamed to have an extension of **.bbg**.  If you
+mind that the files have been renamed to have an extension of `.bbg`.  If you
 have not renamed your image files, you will still be able to open them, but you
 may find it to be more convenient if you do.
 
 To open a BBC graphics file, you can either use browse to it using the
 **File** > **Open** dialog, or you can double click on the file, and choose
-Beebview.exe as the program that you would like to use to open **.bbg** files.
+beebview as the program that you would like to use to open `.bbg` files.
 
 Depending on the format of the file, you may need to change the display mode
 and colour mappings.  LdPic format files contain information about the correct
@@ -62,48 +59,29 @@ The following BBC modes are supported (Mode 1 is the default):
 
 ## Command Line Options
 
-BBC Graphics viewer supports the following command line switches:
+BBC Graphics Viewer supports the following command line options:
 
-### --mode0
+### `--mode`*modenum*
 
-Force starting in graphics Mode 0.
+Force starting in graphics mode *modenum*.
 
-### --mode1
+### `--save`
 
-Force starting in graphics Mode 1.
-
-### --mode2
-
-Force starting in graphics Mode 2.
-
-### --mode4
-
-Force starting in graphics Mode 4.
-
-### --mode5
-
-Force starting in graphics Mode 5.
-
-### --save
-
-Save the image specified on the command line as a bitmap and then quit.  The
-bitmap is given the same name as the input file, but with the extension '.bmp'
+Save the image specified on the command line as a bitmap and then quit.  The
+bitmap is given the same name as the input file, but with the extension `.bmp`
 instead.
 
 
-### Examples
+## Example Usage
 
-Open an image:
-`Beebview "c:\users\example\bbc\image one.bbg"`
+### `beebview "image one.bbg"`
 
-Open an image in Mode 0:
-`Beebview --mode0 "c:\users\example\bbc\image one.bbg"`
+Open `image one.bbg`.
 
-Convert an image to a bitmap:
-`Beebview --save "c:\users\example\bbc\image three.bbg"`
+### `beebview --mode0 "image one.bbg"`
 
-## Questions?
+Open `image one.bbg` in Mode 0.
 
-If you have any questions relating to Beebview, then feel free to [get in
-touch](https://nerdoftheherd.com/contact.php?subject=BBC%20Graphics%20Viewer) -
-I will be happy to hear from you.
+### `beebview --save "image two.bbg"`
+
+Convert `image two.bbg` to a bitmap.

@@ -24,6 +24,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Qt5Widgets REQUIRED)
 
+set(BEEBIMAGE_NO_INSTALL ON)
 add_subdirectory(libbeebimage)
 include_directories(BEFORE libbeebimage)
 
@@ -36,3 +37,5 @@ add_executable(beebview
                BbcScreenWidget.h BbcScreenWidget.cpp Beebview.qrc)
 
 target_link_libraries(beebview Qt5::Widgets beebimage)
+
+install(TARGETS beebview DESTINATION bin)

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=BBC Graphics Viewer
+Type=Application
+Exec=/usr/bin/beebview %f
+Terminal=false
+Icon=/usr/share/pixmaps/beebview.png
+Categories=Graphics
+MimeType=image/x-bbc-graphics
