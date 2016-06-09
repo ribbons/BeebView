@@ -32,9 +32,9 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 endif()
 
-add_executable(beebview
+add_executable(beebview WIN32
                main.cpp About.h About.cpp Beebview.h Beebview.cpp
-               BbcScreenWidget.h BbcScreenWidget.cpp Beebview.qrc)
+               BbcScreenWidget.h BbcScreenWidget.cpp Beebview.qrc Beebview.rc)
 
 target_link_libraries(beebview Qt5::Widgets beebimage)
 
