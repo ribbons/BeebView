@@ -43,14 +43,14 @@
        <item>
         <widget class="QLabel" name="labelName">
          <property name="text">
-          <string>BBC Graphics Viewer 2.0</string>
+          <string>BBC Graphics Viewer </string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="labelCopyright">
          <property name="text">
-          <string>Copyright © 2007-2010 Matt Robinson, © 2003 David Robinson</string>
+          <string>Copyright © </string>
          </property>
         </widget>
        </item>

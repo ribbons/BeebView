@@ -32,6 +32,21 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
 endif()
 
+# Extract the author names and years for the copyright string
+file(READ "AUTHORS.md" AUTHORS)
+string(REGEX MATCHALL "\n## [^\n]+ [0-9]+(-[0-9]+)?\n" AUTHORS "${AUTHORS}")
+string(REGEX REPLACE "\n## ([^\n]+)\n" "\\1" AUTHORS "${AUTHORS}")
+string(REPLACE ";" ", " AUTHORS "${AUTHORS}")
+
+# Fetch the current version string from git describe
+execute_process(COMMAND git describe
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                OUTPUT_VARIABLE VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# Make the author and versions strings available as macros
+add_definitions(-DBEEBVIEW_AUTHORS="${AUTHORS}")
+add_definitions(-DBEEBVIEW_VERSION="${VERSION}")
+
 add_executable(beebview WIN32
                main.cpp About.h About.cpp Beebview.h Beebview.cpp
                BbcScreenWidget.h BbcScreenWidget.cpp Beebview.qrc Beebview.rc)

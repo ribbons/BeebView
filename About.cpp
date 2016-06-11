@@ -27,6 +27,9 @@ About::About(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->labelCopyright->setText(ui->labelCopyright->text() + BEEBVIEW_AUTHORS);
+    ui->labelName->setText(ui->labelName->text() + BEEBVIEW_VERSION);
+
     QObject::connect(ui->buttonBox, &QDialogButtonBox::clicked, this, &About::close);
 }
 
