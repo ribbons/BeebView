@@ -54,3 +54,13 @@ add_executable(beebview WIN32
 target_link_libraries(beebview Qt5::Widgets beebimage)
 
 install(TARGETS beebview DESTINATION bin)
+
+if(WIN32)
+    foreach(THISLIB Core;Gui;Widgets)
+        get_target_property(LIBLOC Qt5::${THISLIB} "IMPORTED_LOCATION_DEBUG")
+        file(COPY "${LIBLOC}" DESTINATION Debug)
+
+        get_target_property(LIBLOC Qt5::${THISLIB} "IMPORTED_LOCATION_RELEASE")
+        file(COPY "${LIBLOC}" DESTINATION Release)
+    endforeach()
+endif()
