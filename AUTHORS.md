@@ -10,7 +10,7 @@ The following people have contributed code to BBC Graphics Viewer:
 * LdPic format support
 * 64-bit build
 * Port to Qt
-* Packaging script for Debian
+* Packaging scripts and installers for Windows and Linux
 
 ## David Robinson 2003
 

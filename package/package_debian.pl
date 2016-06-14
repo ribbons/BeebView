@@ -83,7 +83,7 @@ while(my $issue = $issues->next)
 chomp(my $builddir = `mktemp -d`);
 
 mkdir "$builddir/debian";
-copy "$scriptdir/debian-control", "$builddir/debian/control";
+copy "$scriptdir/linux/debian-control", "$builddir/debian/control";
 
 # Generate a changelog in the required debian format
 open(my $changelog, '>', "$builddir/debian/changelog");
@@ -124,15 +124,15 @@ system("strip $package/usr/bin/beebview");
 
 # Convert and add man page
 mkpath "$package/usr/share/man/man1";
-system("$scriptdir/manpage.pl $scriptdir/../help.md | gzip -n9 > $package/usr/share/man/man1/beebview.1.gz");
+system("$scriptdir/linux/manpage.pl $scriptdir/../help.md | gzip -n9 > $package/usr/share/man/man1/beebview.1.gz");
 
 # Add mime-type, icon and .desktop file for launcher entry
 mkpath "$package/usr/share/mime/packages";
-copy "$scriptdir/beebview.xml", "$package/usr/share/mime/packages";
+copy "$scriptdir/linux/beebview.xml", "$package/usr/share/mime/packages";
 mkdir "$package/usr/share/pixmaps";
 copy "$scriptdir/../Graphics/BeebView.png", "$package/usr/share/pixmaps/beebview.png";
 mkdir "$package/usr/share/applications";
-copy "$scriptdir/beebview.desktop", "$package/usr/share/applications";
+copy "$scriptdir/linux/beebview.desktop", "$package/usr/share/applications";
 
 # Add example files
 mkdir "$package/usr/share/beebview";
@@ -190,7 +190,7 @@ system("fakeroot dpkg-deb --build $package");
 # Lint the built package
 system("lintian $package.deb");
 
-copy "$package.deb", $scriptdir;
+copy "$package.deb", "$scriptdir";
 
 # Clean up
 system("rm -r $builddir");
