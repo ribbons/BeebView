@@ -60,6 +60,7 @@ cmake --build . --target beebview%SUFFIX% --config Release || exit /B 1
 cmake --build . --target package%SUFFIX% --config Release || exit /B 1
 
 copy "%BUILDDIR%\*.msi" "%~dp0" || exit /B 1
+copy "%BUILDDIR%\*.zip" "%~dp0" || exit /B 1
 
 endlocal
 rmdir /s /q "%BUILDDIR%" || exit /B 1

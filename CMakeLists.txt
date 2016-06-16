@@ -71,7 +71,7 @@ if(WIN32)
     # Add the runtime libraries to the list of files to be installed
     include(InstallRequiredSystemLibraries)
 
-    set(CPACK_GENERATOR "WIX")
+    set(CPACK_GENERATOR "WIX;ZIP")
 
     # Set general CPack properties
     set(CPACK_PACKAGE_NAME "BBC Graphics Viewer")
