@@ -16,9 +16,15 @@ rem
 rem You should have received a copy of the GNU General Public License
 rem along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+setlocal
+
 if "%~1"=="" (
     echo Please specify the path to the Qt installation
     exit /B 1
+)
+
+if not "%~2"=="unsigned" (
+    set SUFFIX=_signed
 )
 
 set PREFIX_PATH_32=%~1\msvc2015
@@ -49,7 +55,9 @@ mkdir "%BUILDDIR%" || exit /B 1
 cd /d "%BUILDDIR%" || exit /B 1
 
 cmake -DCMAKE_PREFIX_PATH="%~1" -G"%~2" "%~dp0\.." || exit /B 1
-cmake --build . --target package --config Release || exit /B 1
+
+cmake --build . --target beebview%SUFFIX% --config Release || exit /B 1
+cmake --build . --target package%SUFFIX% --config Release || exit /B 1
 
 copy "%BUILDDIR%\*.msi" "%~dp0" || exit /B 1
 
