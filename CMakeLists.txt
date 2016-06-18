@@ -21,6 +21,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "COMMON")
 
 find_package(Qt5Widgets REQUIRED)
 
@@ -70,61 +71,148 @@ if(WIN32)
 
     # Add the runtime libraries to the list of files to be installed
     include(InstallRequiredSystemLibraries)
+endif()
 
-    set(CPACK_GENERATOR "WIX;ZIP")
-
-    # Set general CPack properties
-    set(CPACK_PACKAGE_NAME "BBC Graphics Viewer")
-    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/package/eula.txt")
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
-    set(CPACK_PACKAGE_VENDOR "NerdoftheHerd.com")
-    set(CPACK_PACKAGE_EXECUTABLES "beebview;BBC Graphics Viewer")
-
-    # CPACK_SYSTEM_NAME isn't defined yet so work it out ourselves
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(CPACK_SYSTEM_NAME "win64")
+macro(set_plat VAR_NAME VALWIN VALOTHER)
+    if(WIN32)
+        set(${VAR_NAME} "${VALWIN}")
     else()
-        set(CPACK_SYSTEM_NAME "win32")
+        set(${VAR_NAME} "${VALOTHER}")
     endif()
+endmacro()
 
-    set(CPACK_PACKAGE_FILE_NAME "BeebView-${VERSION}-${CPACK_SYSTEM_NAME}")
+# Set general CPack properties
+set_plat(CPACK_GENERATOR "WIX;ZIP" "DEB")
+set(CPACK_PACKAGE_NAME "BBC Graphics Viewer")
+set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package/CPackOptions.cmake")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/package/eula.txt")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_VENDOR "NerdoftheHerd.com")
+set(CPACK_PACKAGE_EXECUTABLES "beebview;BBC Graphics Viewer")
+set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
+set(CPACK_STRIP_FILES ON)
 
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+"View and convert graphics files created on BBC Micro or Master computers.
+ BBC Graphics Viewer is able to display BBC graphics files saved in LdPic or
+ memory dump format in Modes 0, 1, 2, 4 and 5.  It can also save any of the
+ images it displays in standard image formats.")
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set_plat(CPACK_SYSTEM_NAME "win64" "amd64")
+else()
+    set_plat(CPACK_SYSTEM_NAME "win32" "i386")
+endif()
+
+set(CPACK_PACKAGE_FILE_NAME "beebview-${VERSION}-${CPACK_SYSTEM_NAME}")
+
+if(WIN32)
     # Check the version contains a number at the start
     if(NOT "${VERSION}" MATCHES "^[0-9]+")
         message(FATAL_ERROR "Unexpected version format \"${VERSION}\"")
     endif()
 
     # Use as much of the version that is just numbers with dots in-between
+    # as Windows Installer can only handle numeric versions
     string(REGEX REPLACE "^([0-9]+(\\.[0-9]+)*).*\$" "\\1"
            CPACK_PACKAGE_VERSION "${VERSION}")
+else()
+    set(CPACK_PACKAGE_VERSION "${VERSION}")
+endif()
 
-    # WIX generator specific values
-    set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_ui_dialog.jpg")
-    set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_ui_banner.jpg")
-    set(CPACK_WIX_UPGRADE_GUID "edbb5c12-9179-46ad-bab2-3eac5be545e6")
-    set(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/Graphics/BeebView.ico")
-    set(CPACK_WIX_PROPERTY_ARPHELPLINK "https://nerdoftheherd.com/tools/beebview/")
-    set(CPACK_WIX_UI_REF "WixUI_Minimal")
+# Archive generator specific config
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 
-    if(CPACK_SYSTEM_NAME STREQUAL "win32")
-        # Prevent the 32-bit .msi being installed on 64-bit Windows
-        set(WIX_PROD_FRAG_CONDITIONS "<Condition Message=\"This is the 32-bit [ProductName] installer, but you are running 64-bit Windows.  Please download the 64-bit installer from [ARPHELPLINK]\">NOT Msix64</Condition>")
-    endif()
+# WIX generator specific config
+set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_ui_dialog.jpg")
+set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_ui_banner.jpg")
+set(CPACK_WIX_UPGRADE_GUID "edbb5c12-9179-46ad-bab2-3eac5be545e6")
+set(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/Graphics/BeebView.ico")
+set(CPACK_WIX_PROPERTY_ARPHELPLINK "https://nerdoftheherd.com/tools/beebview/")
+set(CPACK_WIX_UI_REF "WixUI_Minimal")
 
-    configure_file("package/windows/wix_patch.xml" "wix_patch.xml")
-    set(CPACK_WIX_PATCH_FILE "${CMAKE_BINARY_DIR}/wix_patch.xml")
+if(CPACK_SYSTEM_NAME STREQUAL "win32")
+    # Prevent the 32-bit .msi being installed on 64-bit Windows
+    set(WIX_PROD_FRAG_CONDITIONS "<Condition Message=\"This is the 32-bit [ProductName] installer, but you are running 64-bit Windows.  Please download the 64-bit installer from [ARPHELPLINK]\">NOT Msix64</Condition>")
+endif()
 
-    # Convert LICENSE & AUTHORS files line endings and install in program folder
-    configure_file(LICENSE.txt LICENSE.txt)
-    configure_file(AUTHORS.md AUTHORS.txt)
-    install(FILES "${CMAKE_BINARY_DIR}/LICENSE.txt"
-                  "${CMAKE_BINARY_DIR}/AUTHORS.txt" DESTINATION .)
+configure_file("package/windows/wix_patch.xml" "wix_patch.xml")
+set(CPACK_WIX_PATCH_FILE "${CMAKE_BINARY_DIR}/wix_patch.xml")
 
-    install(FILES "Examples/Aworks (LdPic).bbg"
-                  "Examples/Balls (Dump - Mode 0).bbg"
-                  "Examples/Flower (Dump - Mode 1).bbg"
-            DESTINATION examples)
+# DEB generator specific config
+set(CPACK_DEBIAN_PACKAGE_NAME "beebview")
+set(CPACK_DEBIAN_PACKAGE_SECTION "graphics")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "lsb-base")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://nerdoftheherd.com/tools/beebview/")
+set(CPACK_DEB_COMPONENT_INSTALL ON)
 
+# Generate debian format copyright file
+configure_file("package/linux/debian-copyright" "copyright")
+install(FILES "${CMAKE_BINARY_DIR}/copyright" DESTINATION share/doc/beebview
+        COMPONENT DEBIAN)
+
+if(NOT WIN32)
+    execute_process(COMMAND date -R OUTPUT_VARIABLE PACKAGE_TIMESTAMP
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    # Generate debian format changelog file
+    configure_file("package/linux/debian-changelog" "changelog.Debian")
+
+    execute_process(COMMAND gzip -n9
+                    INPUT_FILE "${CMAKE_BINARY_DIR}/changelog.Debian"
+                    OUTPUT_FILE "${CMAKE_BINARY_DIR}/changelog.Debian.gz")
+
+    install(FILES "${CMAKE_BINARY_DIR}/changelog.Debian.gz"
+            DESTINATION share/doc/beebview COMPONENT DEBIAN)
+
+    # Convert man page
+    execute_process(COMMAND package/linux/manpage.pl help.md
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                    OUTPUT_FILE "${CMAKE_BINARY_DIR}/beebview.1")
+
+    execute_process(COMMAND gzip -n9
+                    INPUT_FILE "${CMAKE_BINARY_DIR}/beebview.1"
+                    OUTPUT_FILE "${CMAKE_BINARY_DIR}/beebview.1.gz")
+
+    install(FILES "${CMAKE_BINARY_DIR}/beebview.1.gz"
+            DESTINATION share/man/man1 COMPONENT DEBIAN)
+endif()
+
+# Convert LICENSE & AUTHORS files line endings and install in program folder
+configure_file(LICENSE.txt LICENSE.txt)
+configure_file(AUTHORS.md AUTHORS.txt)
+install(FILES "${CMAKE_BINARY_DIR}/LICENSE.txt"
+              "${CMAKE_BINARY_DIR}/AUTHORS.txt" DESTINATION .
+              COMPONENT WINDOWS)
+
+install(DIRECTORY Examples/ DESTINATION examples COMPONENT WINDOWS
+        FILES_MATCHING PATTERN "*.bbg")
+
+install(DIRECTORY Examples/ DESTINATION share/beebview/examples COMPONENT DEBIAN
+        FILES_MATCHING PATTERN "*.bbg")
+
+install(FILES package/linux/beebview.xml DESTINATION share/mime/packages
+        COMPONENT DEBIAN)
+
+install(FILES Graphics/BeebView.png DESTINATION share/pixmaps
+        COMPONENT DEBIAN RENAME beebview.png)
+
+install(FILES package/linux/beebview.desktop DESTINATION share/applications
+        COMPONENT DEBIAN)
+
+# Set permissions correctly for directories when building a DEB package
+foreach(DIR IN ITEMS . bin share share/applications share/doc share/beebview
+                     share/beebview/examples share/doc/beebview share/mime
+                     share/mime/packages share/pixmaps share/man share/man/man1)
+    install(DIRECTORY DESTINATION ${DIR}
+            DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
+                                  GROUP_EXECUTE GROUP_READ
+                                  WORLD_READ WORLD_EXECUTE
+            COMPONENT DEBIAN)
+endforeach()
+
+if(WIN32)
     # Code signing targets
     set(TS_SERVER http://time.certum.pl)
 
@@ -141,6 +229,6 @@ if(WIN32)
 
     add_dependencies(beebview_signed beebview)
     add_dependencies(package_signed PACKAGE)
-
-    include(CPack)
 endif()
+
+include(CPack)

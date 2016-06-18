@@ -18,11 +18,11 @@
 
 <CPackWiXPatch>
     <!-- Add a file association for .bbg files to beebview -->
-    <CPackWiXFragment Id="CM_CP_bin.beebview.exe">
+    <CPackWiXFragment Id="CM_CP_COMMON.bin.beebview.exe">
         <ProgId Id='beebview.bbgfile' Description='BBC Graphics File'>
             <Extension Id='bbg' ContentType='image/x-bbc-graphics'>
                 <Verb Id='open' Command='Open'
-                      TargetFile='CM_FP_bin.beebview.exe' Argument='"%1"' />
+                      TargetFile='CM_FP_COMMON.bin.beebview.exe' Argument='"%1"' />
             </Extension>
         </ProgId>
     </CPackWiXFragment>
