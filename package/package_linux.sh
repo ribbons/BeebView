@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/bin/sh -e
 
 # This file is part of BBC Graphics Viewer.
 # Copyright © 2016 by the authors - see the AUTHORS file for details.
@@ -16,36 +16,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use strict;
-use warnings;
+SCRIPTDIR=$(dirname "$(readlink -f "$0")")
 
-use autodie qw(:all);
-use File::Basename;
-use File::Copy;
-use File::Spec::Functions qw(rel2abs);
-
-my $scriptdir = dirname(rel2abs($0));
-
-if(!defined($ENV{DEBFULLNAME}) || !defined($ENV{DEBEMAIL}))
-{
-    die("DEBFULLNAME and DEBEMAIL should be set before running this script!\n");
-}
+if [ -z "$DEBFULLNAME" ] || [ -z "$DEBEMAIL" ]; then
+    echo "DEBFULLNAME and DEBEMAIL should be set before running this script!" >&2
+    exit 1
+fi
 
 # Set up the temporary folder to build the packages in
-chomp(my $builddir = `mktemp -d`);
+BUILDDIR=$(mktemp -d)
 
 # Build the packages
-chdir "$builddir";
-system("cmake -DCPACK_PACKAGE_CONTACT=\"$ENV{DEBFULLNAME} <$ENV{DEBEMAIL}>\" ".
-             "-DCMAKE_BUILD_TYPE=Release \"$scriptdir/..\"");
-system("make package");
+cd "$BUILDDIR"
+cmake -DCPACK_PACKAGE_CONTACT="$DEBFULLNAME <$DEBEMAIL>" \
+      -DCMAKE_BUILD_TYPE=Release "$SCRIPTDIR/.."
+make package
 
 # Lint the built package
-system("lintian *.deb");
+lintian *.deb
 
 # Fetch the built packages
-copy <*.deb>, "$scriptdir";
-copy <*.tar.gz>, "$scriptdir";
+cp *.deb "$SCRIPTDIR"
+cp *.tar.gz "$SCRIPTDIR"
 
 # Clean up
-system("rm -r $builddir");
+rm -r "$BUILDDIR"
