@@ -82,7 +82,7 @@ macro(set_plat VAR_NAME VALWIN VALOTHER)
 endmacro()
 
 # Set general CPack properties
-set_plat(CPACK_GENERATOR "WIX;ZIP" "DEB")
+set_plat(CPACK_GENERATOR "WIX;ZIP" "DEB;TGZ")
 set(CPACK_PACKAGE_NAME "BBC Graphics Viewer")
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package/CPackOptions.cmake")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/package/eula.txt")
@@ -176,7 +176,7 @@ if(NOT WIN32)
                     OUTPUT_FILE "${CMAKE_BINARY_DIR}/beebview.1.gz")
 
     install(FILES "${CMAKE_BINARY_DIR}/beebview.1.gz"
-            DESTINATION share/man/man1 COMPONENT DEBIAN)
+            DESTINATION share/man/man1 COMPONENT LINUX)
 endif()
 
 # Convert LICENSE & AUTHORS files line endings and install in program folder
@@ -184,22 +184,22 @@ configure_file(LICENSE.txt LICENSE.txt)
 configure_file(AUTHORS.md AUTHORS.txt)
 install(FILES "${CMAKE_BINARY_DIR}/LICENSE.txt"
               "${CMAKE_BINARY_DIR}/AUTHORS.txt" DESTINATION .
-              COMPONENT WINDOWS)
+              COMPONENT ROOTFILES)
 
 install(DIRECTORY Examples/ DESTINATION examples COMPONENT WINDOWS
         FILES_MATCHING PATTERN "*.bbg")
 
-install(DIRECTORY Examples/ DESTINATION share/beebview/examples COMPONENT DEBIAN
+install(DIRECTORY Examples/ DESTINATION share/beebview/examples COMPONENT LINUX
         FILES_MATCHING PATTERN "*.bbg")
 
 install(FILES package/linux/beebview.xml DESTINATION share/mime/packages
-        COMPONENT DEBIAN)
+        COMPONENT LINUX)
 
 install(FILES Graphics/BeebView.png DESTINATION share/pixmaps
-        COMPONENT DEBIAN RENAME beebview.png)
+        COMPONENT LINUX RENAME beebview.png)
 
 install(FILES package/linux/beebview.desktop DESTINATION share/applications
-        COMPONENT DEBIAN)
+        COMPONENT LINUX)
 
 # Set permissions correctly for directories when building a DEB package
 foreach(DIR IN ITEMS . bin share share/applications share/doc share/beebview

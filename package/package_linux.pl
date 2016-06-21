@@ -31,10 +31,10 @@ if(!defined($ENV{DEBFULLNAME}) || !defined($ENV{DEBEMAIL}))
     die("DEBFULLNAME and DEBEMAIL should be set before running this script!\n");
 }
 
-# Set up the temporary folder to build the package in
+# Set up the temporary folder to build the packages in
 chomp(my $builddir = `mktemp -d`);
 
-# Build the package
+# Build the packages
 chdir "$builddir";
 system("cmake -DCPACK_PACKAGE_CONTACT=\"$ENV{DEBFULLNAME} <$ENV{DEBEMAIL}>\" ".
              "-DCMAKE_BUILD_TYPE=Release \"$scriptdir/..\"");
@@ -43,8 +43,9 @@ system("make package");
 # Lint the built package
 system("lintian *.deb");
 
-# Fetch the built package
+# Fetch the built packages
 copy <*.deb>, "$scriptdir";
+copy <*.tar.gz>, "$scriptdir";
 
 # Clean up
 system("rm -r $builddir");
