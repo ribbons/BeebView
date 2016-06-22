@@ -223,7 +223,7 @@ void Beebview::modesGroup_triggered(QAction *action)
 
 void Beebview::on_actionReportBug_triggered(bool checked)
 {
-    QDesktopServices::openUrl(QUrl("https://nerdoftheherd.com/tools/beebview/bug_report.php"));
+    QDesktopServices::openUrl(QUrl("https://nerdoftheherd.com/tools/beebview/report-a-bug/"));
 }
 
 void Beebview::on_actionHelp_triggered(bool checked)
