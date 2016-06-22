@@ -83,8 +83,9 @@ foreach (@sec_names)
 
     my $section = $sections{$_};
 
-    # Escape dots
+    # Escape dots and double quotes
     $section =~ s/\./\\./g;
+    $section =~ s/"/\\(dq/g;
 
     # Second level headings
     $section =~ s/\n### (.+)\n\n/\n.TP\n.B $1\n/g;
