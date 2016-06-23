@@ -120,8 +120,9 @@ Beebview::Beebview(QStringList args, QWidget *parent) :
             screen->setMode(screenMode);
             image->setScreen(screen);
             this->setFixedSize(this->sizeHint());
-            this->UpdateInfo();
         }
+
+        this->UpdateInfo();
     }
 
     // Automatically save the file and exit if autoSave is true
