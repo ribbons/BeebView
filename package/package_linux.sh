@@ -33,7 +33,7 @@ cmake -DCPACK_PACKAGE_CONTACT="$DEBFULLNAME <$DEBEMAIL>" \
 make package
 
 # Lint the built package
-lintian *.deb
+lintian --suppress-tags wrong-name-for-changelog-of-native-package *.deb
 
 # Fetch the built packages
 cp *.deb "$SCRIPTDIR"
