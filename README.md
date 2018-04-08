@@ -1,8 +1,23 @@
 BBC Graphics Viewer
 ===================
 
-BBC Graphics Viewer is a utility for viewing and converting graphics files
-originally created on BBC Micro or Master computers.
+A cross-platform viewer and converter for graphics files originally created on
+BBC Micro or Master computers.
+
+Two of the most common ways of storing images on the BBC were as a dump of the
+graphics memory, or in a run-length encoded format loaded by a program called
+[LdPic](https://nerdoftheherd.com/projects/libbeebimage/ldpic/).
+
+However, due to the unusual way that the BBC's graphics memory was mapped to
+the screen (in blocks of eight bytes) it is not straight-forward to view either
+of these formats on a PC with other tools.
+
+This utility is able to display BBC graphics files saved in LdPic or memory
+dump format in Modes 0, 1, 2, 4 and 5. It can also save any of the images it
+displays in a variety of image formats.
+
+Runs under both Windows and Linux (requires the [Qt](https://www.qt.io/)
+framework).
 
 Compile
 -------
