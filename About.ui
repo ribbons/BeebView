@@ -50,7 +50,7 @@
        <item>
         <widget class="QLabel" name="labelCopyright">
          <property name="text">
-          <string>Copyright © </string>
+          <string>Copyright © 1999-</string>
          </property>
         </widget>
        </item>

@@ -4,5 +4,5 @@ Upstream-Contact: ${CPACK_PACKAGE_CONTACT}
 Source: ${CPACK_DEBIAN_PACKAGE_HOMEPAGE}
 
 Files: *
-Copyright: Copyright © ${AUTHORS}
+Copyright: Copyright © 1999-${COMMIT_YEAR}
 License: GPL-3+
