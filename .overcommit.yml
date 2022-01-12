@@ -1,0 +1,37 @@
+---
+PreCommit:
+
+  ALL:
+    problem_on_unmodified_line: warn
+
+  TrailingWhitespace:
+    enabled: true
+
+  FileEncoding:
+    description: Check text files are valid UTF-8
+    enabled: true
+
+  SingleNewlineAtEof:
+    description: Check text files end with a single newline
+    enabled: true
+
+  Copyright:
+    description: Check copyright notices are present and updated
+    enabled: true
+
+  PerlCritic:
+    enabled: true
+    required_executable: perlcritic
+    flags: [--verbose, '1', --quiet]
+    include:
+      - package/linux/generate-manpage
+
+  ShellCheck:
+    enabled: true
+    on_warn: fail
+    include:
+      - package/package_linux
+
+  YamlLint:
+    enabled: true
+    on_warn: fail

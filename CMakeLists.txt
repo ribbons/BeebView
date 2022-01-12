@@ -154,7 +154,7 @@ if(NOT WIN32)
             DESTINATION share/doc/beebview COMPONENT DEBIAN)
 
     # Convert man page
-    execute_process(COMMAND package/linux/manpage.pl help.md
+    execute_process(COMMAND package/linux/generate-manpage help.md
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                     OUTPUT_FILE "${CMAKE_BINARY_DIR}/beebview.1")
 

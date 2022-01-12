@@ -16,7 +16,7 @@ my %sections;
 
 foreach (@ARGV)
 {
-    open(my $markdown, "<", $_);
+    open my $markdown, '<', $_;
     my $current;
 
     while (<$markdown>)
@@ -27,7 +27,7 @@ foreach (@ARGV)
         }
         elsif(m/^## (.+)$/)
         {
-            $current = uc($1);
+            $current = uc $1;
 
             if($current eq 'COMMAND LINE OPTIONS')
             {
@@ -59,7 +59,7 @@ foreach (@ARGV)
     close $markdown;
 };
 
-print <<EOF;
+print <<"EOF";
 .TH BEEBVIEW 1 2016-05-11 beebview "$header"
 .SH NAME
 beebview \- view and convert BBC graphics files
@@ -72,29 +72,29 @@ foreach (@sec_names)
     my $section = $sections{$_};
 
     # Escape dots and double quotes
-    $section =~ s/\./\\./g;
+    $section =~ s/[.]/\\./g;
     $section =~ s/"/\\(dq/g;
 
     # Second level headings
     $section =~ s/\n### (.+)\n\n/\n.TP\n.B $1\n/g;
 
     # **xyz** to .B xyz
-    $section =~ s/\s+\*\*([^*]+)\*\*\s/\n.B $1\n/g;
+    $section =~ s/\s+[*]{2}([^*]+)[*]{2}\s/\n.B $1\n/g;
 
     # **xyz**xyz to .BR "xyz" "xyz"
-    $section =~ s/\s+\*\*([^*]+)\*\*(\S+)\s+/\n.BR "$1" "$2"\n/g;
+    $section =~ s/\s+[*]{2}([^*]+)[*]{2}(\S+)\s+/\n.BR "$1" "$2"\n/g;
 
     # *xyz* to .I xyz
-    $section =~ s/\s+\*([^*]+)\*\s/\n.I $1\n/g;
+    $section =~ s/\s+[*]([^*]+)[*]\s/\n.I $1\n/g;
 
     # *xyz*xyz to .IR "xyz" "xyz"
-    $section =~ s/\s+\*([^*]+)\*(\S+)\s+/\n.IR "$1" "$2"\n/g;
+    $section =~ s/\s+[*]([^*]+)[*](\S+)\s+/\n.IR "$1" "$2"\n/g;
 
     # `xyz` to .B xyz
     $section =~ s/\s+`([^`]+)`\s/\n.B $1\n/g;
 
     # `xyz`*xyz* to .BI "xyz" "xyz"
-    $section =~ s/\s+`([^`]+)`\*(([^*]+))\*\s+/\n.BI "$1" "$2"\n/g;
+    $section =~ s/\s+`([^`]+)`[*](([^*]+))[*]\s+/\n.BI "$1" "$2"\n/g;
 
     # `xyz`xyz to .BR "xyz" "xyz"
     $section =~ s/\s+`([^`]+)`(\S+)\s+/\n.BR "$1" "$2"\n/g;
