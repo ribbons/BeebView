@@ -1,20 +1,20 @@
 severity = 1
 
-[-CodeLayout::RequireTidyCode]
-
-[-Documentation::PodSpelling]
-
 [InputOutput::RequireBriefOpen]
 lines = 1000
-
-[InputOutput::RequireCheckedSyscalls]
-functions = :builtins
-exclude_functions = print sleep
-
-[-Modules::RequireVersionVar]
 
 [-RegularExpressions::RequireExtendedFormatting]
 
 [-RegularExpressions::RequireLineBoundaryMatching]
 
 [-RegularExpressions::RequireDotMatchAnything]
+
+[-Modules::RequireVersionVar]
+
+[InputOutput::RequireCheckedSyscalls]
+functions = :builtins
+exclude_functions = print sleep
+
+[-CodeLayout::RequireTidyCode]
+
+[-Documentation::PodSpelling]

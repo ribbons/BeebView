@@ -1,0 +1,38 @@
+---
+# Copyright © 2024 Matt Robinson
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: CI
+on:
+  push:
+    branches-ignore: dependabot/**
+  pull_request:
+  schedule:
+    - cron: '30 12 * * 5'
+
+permissions:
+  contents: read
+
+jobs:
+  overcommit:
+    name: Overcommit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install packages
+        run: sudo apt-get install libperl-critic-perl
+
+      - name: Install Overcommit and sign
+        run: |
+          sudo gem install overcommit --no-document
+          overcommit --sign
+          overcommit --sign pre-commit
+
+      - name: Run hooks
+        env:
+          GIT_AUTHOR_NAME: Dummy
+          GIT_AUTHOR_EMAIL: dummy@example.com
+        run: overcommit --run
