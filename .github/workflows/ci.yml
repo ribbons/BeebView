@@ -36,3 +36,49 @@ jobs:
           GIT_AUTHOR_NAME: Dummy
           GIT_AUTHOR_EMAIL: dummy@example.com
         run: overcommit --run
+
+  build:
+    name: Build & package
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-latest
+          - windows-latest
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Linux Dependencies
+        if: matrix.runner == 'ubuntu-latest'
+        run: sudo apt-get install qtbase5-dev libipc-system-simple-perl
+
+      - name: Windows Dependencies
+        if: matrix.runner == 'windows-latest'
+        uses: jurplel/install-qt-action@f03f05556819ceb3781ee2f455ec44c339d683c0
+        with:
+          version: 5.*
+          archives: qtbase
+          cache: true
+
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+
+      - name: Package
+        run: cmake --build build --target package --config Release
+
+      - name: Upload packages to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ runner.os }}
+          path: |
+            build/beebview-*.deb
+            build/beebview-*.tar.gz
+            build/beebview-*.msi
+            build/beebview-*.zip

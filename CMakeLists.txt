@@ -1,4 +1,4 @@
-# Copyright © 2016 Matt Robinson
+# Copyright © 2016-2024 Matt Robinson
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -71,6 +71,7 @@ endmacro()
 # Set general CPack properties
 set_plat(CPACK_GENERATOR "WIX;ZIP" "DEB;TGZ")
 set(CPACK_PACKAGE_NAME "BBC Graphics Viewer")
+set(CPACK_PACKAGE_CONTACT "Matt Robinson <packaging@nerdoftheherd.com>")
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package/CPackOptions.cmake")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/package/eula.txt")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
