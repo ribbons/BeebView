@@ -198,23 +198,4 @@ foreach(DIR IN ITEMS . bin share share/applications share/doc share/beebview
             COMPONENT DEBIAN)
 endforeach()
 
-if(WIN32)
-    # Code signing targets
-    set(TS_SERVER http://time.certum.pl)
-
-    # Add SHA1 sig for Vista & below, amend (/as) with SHA256 sig for Win 7+
-    add_custom_target(beebview_signed
-                      COMMAND signtool sign /t ${TS_SERVER} $<TARGET_FILE:beebview>
-                      COMMAND signtool sign /as /fd sha256 /tr ${TS_SERVER} /td sha256 $<TARGET_FILE:beebview>
-                      VERBATIM)
-
-    # Sign .msi with just SHA256 for Win 7+ as they don't support multiple sigs
-    add_custom_target(package_signed
-                      signtool sign /fd sha256 /tr ${TS_SERVER} /td sha256 ${CPACK_PACKAGE_FILE_NAME}.msi
-                      VERBATIM)
-
-    add_dependencies(beebview_signed beebview)
-    add_dependencies(package_signed PACKAGE)
-endif()
-
 include(CPack)
