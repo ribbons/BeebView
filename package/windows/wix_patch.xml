@@ -1,16 +1,16 @@
 <!--
-    Copyright © 2016 Matt Robinson
+    Copyright © 2016-2024 Matt Robinson
 
     SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <CPackWiXPatch>
     <!-- Add a file association for .bbg files to beebview -->
-    <CPackWiXFragment Id="CM_CP_COMMON.bin.beebview.exe">
+    <CPackWiXFragment Id="CM_CP_common.bin.beebview.exe">
         <ProgId Id='beebview.bbgfile' Description='BBC Graphics File'>
             <Extension Id='bbg' ContentType='image/x-bbc-graphics'>
                 <Verb Id='open' Command='Open'
-                      TargetFile='CM_FP_COMMON.bin.beebview.exe' Argument='"%1"' />
+                      TargetFile='CM_FP_common.bin.beebview.exe' Argument='"%1"' />
             </Extension>
         </ProgId>
     </CPackWiXFragment>

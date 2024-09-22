@@ -9,7 +9,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "COMMON")
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "common")
 
 find_package(Qt5Widgets REQUIRED)
 
@@ -138,7 +138,7 @@ set(CPACK_DEB_COMPONENT_INSTALL ON)
 # Generate debian format copyright file
 configure_file("package/linux/debian-copyright" "copyright")
 install(FILES "${CMAKE_BINARY_DIR}/copyright" DESTINATION share/doc/beebview
-        COMPONENT DEBIAN)
+        COMPONENT debian)
 
 if(NOT WIN32)
     execute_process(COMMAND date -R OUTPUT_VARIABLE PACKAGE_TIMESTAMP
@@ -152,7 +152,7 @@ if(NOT WIN32)
                     OUTPUT_FILE "${CMAKE_BINARY_DIR}/changelog.Debian.gz")
 
     install(FILES "${CMAKE_BINARY_DIR}/changelog.Debian.gz"
-            DESTINATION share/doc/beebview COMPONENT DEBIAN)
+            DESTINATION share/doc/beebview COMPONENT debian)
 
     # Convert man page
     execute_process(COMMAND package/linux/generate-manpage help.md
@@ -164,28 +164,28 @@ if(NOT WIN32)
                     OUTPUT_FILE "${CMAKE_BINARY_DIR}/beebview.1.gz")
 
     install(FILES "${CMAKE_BINARY_DIR}/beebview.1.gz"
-            DESTINATION share/man/man1 COMPONENT LINUX)
+            DESTINATION share/man/man1 COMPONENT linux)
 endif()
 
 # Convert LICENSE file line endings and install in program folder
 configure_file(LICENSE.txt LICENSE.txt)
 install(FILES "${CMAKE_BINARY_DIR}/LICENSE.txt" DESTINATION .
-              COMPONENT ROOTFILES)
+              COMPONENT rootfiles)
 
-install(DIRECTORY Examples/ DESTINATION examples COMPONENT WINDOWS
+install(DIRECTORY Examples/ DESTINATION examples COMPONENT windows
         FILES_MATCHING PATTERN "*.bbg")
 
-install(DIRECTORY Examples/ DESTINATION share/beebview/examples COMPONENT LINUX
+install(DIRECTORY Examples/ DESTINATION share/beebview/examples COMPONENT linux
         FILES_MATCHING PATTERN "*.bbg")
 
 install(FILES package/linux/beebview.xml DESTINATION share/mime/packages
-        COMPONENT LINUX)
+        COMPONENT linux)
 
 install(FILES Graphics/BeebView.png DESTINATION share/pixmaps
-        COMPONENT LINUX RENAME beebview.png)
+        COMPONENT linux RENAME beebview.png)
 
 install(FILES package/linux/beebview.desktop DESTINATION share/applications
-        COMPONENT LINUX)
+        COMPONENT linux)
 
 # Set permissions correctly for directories when building a DEB package
 foreach(DIR IN ITEMS . bin share share/applications share/doc share/beebview
@@ -195,7 +195,7 @@ foreach(DIR IN ITEMS . bin share share/applications share/doc share/beebview
             DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE
                                   GROUP_EXECUTE GROUP_READ
                                   WORLD_READ WORLD_EXECUTE
-            COMPONENT DEBIAN)
+            COMPONENT debian)
 endforeach()
 
 include(CPack)
