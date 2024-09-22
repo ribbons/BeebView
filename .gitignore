@@ -1,6 +1,2 @@
 Thumbs.db
 build
-package/*.deb
-package/*.msi
-package/*.zip
-package/*.tar.gz
