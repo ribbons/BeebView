@@ -60,16 +60,15 @@ if(WIN32)
     include(InstallRequiredSystemLibraries)
 endif()
 
-macro(set_plat VAR_NAME VALWIN VALOTHER)
-    if(WIN32)
-        set(${VAR_NAME} "${VALWIN}")
-    else()
-        set(${VAR_NAME} "${VALOTHER}")
-    endif()
-endmacro()
-
 # Set general CPack properties
-set_plat(CPACK_GENERATOR "WIX;ZIP" "DEB;TGZ")
+if(WIN32)
+    set(CPACK_GENERATOR "WIX;ZIP")
+    set(CPACK_SYSTEM_NAME "win64")
+else()
+    set(CPACK_GENERATOR "DEB;TGZ")
+    set(CPACK_SYSTEM_NAME "amd64")
+endif()
+
 set(CPACK_PACKAGE_NAME "BBC Graphics Viewer")
 set(CPACK_PACKAGE_CONTACT "Matt Robinson <packaging@nerdoftheherd.com>")
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package/CPackOptions.cmake")
@@ -77,6 +76,7 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/package/eula.txt")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 set(CPACK_PACKAGE_VENDOR "NerdoftheHerd.com")
 set(CPACK_PACKAGE_EXECUTABLES "beebview;BBC Graphics Viewer")
+set(CPACK_PACKAGE_FILE_NAME "beebview-${VERSION}-${CPACK_SYSTEM_NAME}")
 set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
 set(CPACK_STRIP_FILES ON)
 
@@ -85,14 +85,6 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
  BBC Graphics Viewer is able to display BBC graphics files saved in LdPic or
  memory dump format in Modes 0, 1, 2, 4 and 5.  It can also save any of the
  images it displays in standard image formats.")
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set_plat(CPACK_SYSTEM_NAME "win64" "amd64")
-else()
-    set_plat(CPACK_SYSTEM_NAME "win32" "i386")
-endif()
-
-set(CPACK_PACKAGE_FILE_NAME "beebview-${VERSION}-${CPACK_SYSTEM_NAME}")
 
 if(WIN32)
     # Check the version contains a number at the start
@@ -115,17 +107,10 @@ set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 set(CPACK_WIX_UI_DIALOG "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_ui_dialog.jpg")
 set(CPACK_WIX_UI_BANNER "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_ui_banner.jpg")
 set(CPACK_WIX_UPGRADE_GUID "edbb5c12-9179-46ad-bab2-3eac5be545e6")
+set(CPACK_WIX_PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/package/windows/wix_patch.xml")
 set(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/Graphics/BeebView.ico")
 set(CPACK_WIX_PROPERTY_ARPHELPLINK "https://nerdoftheherd.com/tools/beebview/")
 set(CPACK_WIX_UI_REF "WixUI_Minimal")
-
-if(CPACK_SYSTEM_NAME STREQUAL "win32")
-    # Prevent the 32-bit .msi being installed on 64-bit Windows
-    set(WIX_PROD_FRAG_CONDITIONS "<Condition Message=\"This is the 32-bit [ProductName] installer, but you are running 64-bit Windows.  Please download the 64-bit installer from [ARPHELPLINK]\">NOT Msix64</Condition>")
-endif()
-
-configure_file("package/windows/wix_patch.xml" "wix_patch.xml")
-set(CPACK_WIX_PATCH_FILE "${CMAKE_BINARY_DIR}/wix_patch.xml")
 
 # DEB generator specific config
 set(CPACK_DEBIAN_PACKAGE_NAME "beebview")

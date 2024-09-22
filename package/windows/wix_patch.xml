@@ -14,8 +14,4 @@
             </Extension>
         </ProgId>
     </CPackWiXFragment>
-
-    <CPackWiXFragment Id="#PRODUCT">
-        @WIX_PROD_FRAG_CONDITIONS@
-    </CPackWiXFragment>
 </CPackWiXPatch>
