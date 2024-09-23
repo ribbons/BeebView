@@ -25,7 +25,7 @@ Compile
 You'll need the following in addition to a C++ compiler:
 
 * [CMake](https://cmake.org/) in your PATH
-* The [Qt framework](https://www.qt.io/), version 5.x
+* The [Qt framework](https://www.qt.io/), version 6.x
 
 First, open a shell in the root of the project and then run the following to
 fetch the submodule and generate the build files.
