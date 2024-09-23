@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.14)
 project("Beebview")
 
 set(CMAKE_AUTOMOC ON)
@@ -44,17 +44,10 @@ target_link_libraries(beebview Qt6::Widgets beebimage)
 install(TARGETS beebview DESTINATION bin)
 
 if(WIN32)
-    # Copy the Qt libraries to the build folders and add them to the install
-    foreach(THISLIB Core;Gui;Widgets)
-        get_target_property(LIBLOC Qt6::${THISLIB} "IMPORTED_LOCATION_DEBUG")
-        file(COPY "${LIBLOC}" DESTINATION Debug)
-        install(FILES "${LIBLOC}" DESTINATION bin CONFIGURATIONS Debug)
-
-        get_target_property(LIBLOC Qt6::${THISLIB} "IMPORTED_LOCATION_RELEASE")
-        file(COPY "${LIBLOC}" DESTINATION Release)
-        install(FILES "${LIBLOC}" DESTINATION bin
-                CONFIGURATIONS RelWithDebInfo Release MinSizeRel)
-    endforeach()
+    # Add the necessary Qt libraries to the install
+    qt_generate_deploy_app_script(TARGET beebview OUTPUT_SCRIPT DEPLOYQT_SCRIPT
+                                  NO_COMPILER_RUNTIME NO_TRANSLATIONS)
+    install(SCRIPT "${DEPLOYQT_SCRIPT}")
 
     # Add the runtime libraries to the list of files to be installed
     include(InstallRequiredSystemLibraries)
