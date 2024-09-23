@@ -11,14 +11,14 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "common")
 
-find_package(Qt5Widgets REQUIRED)
+find_package(Qt6Widgets REQUIRED)
 
 set(BEEBIMAGE_NO_INSTALL ON)
 add_subdirectory(libbeebimage)
 include_directories(BEFORE libbeebimage)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
 endif()
 
 # Fetch the year of the current git commit
@@ -39,18 +39,18 @@ add_executable(beebview WIN32
                main.cpp About.h About.cpp Beebview.h Beebview.cpp
                BbcScreenWidget.h BbcScreenWidget.cpp Beebview.qrc Beebview.rc)
 
-target_link_libraries(beebview Qt5::Widgets beebimage)
+target_link_libraries(beebview Qt6::Widgets beebimage)
 
 install(TARGETS beebview DESTINATION bin)
 
 if(WIN32)
     # Copy the Qt libraries to the build folders and add them to the install
     foreach(THISLIB Core;Gui;Widgets)
-        get_target_property(LIBLOC Qt5::${THISLIB} "IMPORTED_LOCATION_DEBUG")
+        get_target_property(LIBLOC Qt6::${THISLIB} "IMPORTED_LOCATION_DEBUG")
         file(COPY "${LIBLOC}" DESTINATION Debug)
         install(FILES "${LIBLOC}" DESTINATION bin CONFIGURATIONS Debug)
 
-        get_target_property(LIBLOC Qt5::${THISLIB} "IMPORTED_LOCATION_RELEASE")
+        get_target_property(LIBLOC Qt6::${THISLIB} "IMPORTED_LOCATION_RELEASE")
         file(COPY "${LIBLOC}" DESTINATION Release)
         install(FILES "${LIBLOC}" DESTINATION bin
                 CONFIGURATIONS RelWithDebInfo Release MinSizeRel)
