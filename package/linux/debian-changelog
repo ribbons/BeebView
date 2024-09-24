@@ -1,5 +1,0 @@
-beebview (${CPACK_PACKAGE_VERSION}) UNRELEASED; urgency=low
-
-  * Debian packaging of version ${CPACK_PACKAGE_VERSION} of beebview
-
- -- ${CPACK_PACKAGE_CONTACT}  ${PACKAGE_TIMESTAMP}

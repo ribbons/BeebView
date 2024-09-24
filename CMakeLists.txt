@@ -119,19 +119,6 @@ install(FILES "${CMAKE_BINARY_DIR}/copyright" DESTINATION share/doc/beebview
         COMPONENT debian)
 
 if(NOT WIN32)
-    execute_process(COMMAND date -R OUTPUT_VARIABLE PACKAGE_TIMESTAMP
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    # Generate debian format changelog file
-    configure_file("package/linux/debian-changelog" "changelog.Debian")
-
-    execute_process(COMMAND gzip -n9
-                    INPUT_FILE "${CMAKE_BINARY_DIR}/changelog.Debian"
-                    OUTPUT_FILE "${CMAKE_BINARY_DIR}/changelog.Debian.gz")
-
-    install(FILES "${CMAKE_BINARY_DIR}/changelog.Debian.gz"
-            DESTINATION share/doc/beebview COMPONENT debian)
-
     # Convert man page
     execute_process(COMMAND package/linux/generate-manpage help.md
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
