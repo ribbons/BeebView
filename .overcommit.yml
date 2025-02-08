@@ -35,3 +35,21 @@ PreCommit:
   YamlLint:
     enabled: true
     on_warn: fail
+
+  Cppcheck:
+    description: Check C/C++ source files with cppcheck
+    enabled: true
+    required_executable: cppcheck
+    include:
+      - "**/*.cpp"
+    flags:
+      - --quiet
+      - --enable=all
+      - --library=qt
+      - --inline-suppr
+      - --suppress=missingInclude
+      - --suppress=unusedFunction
+      - --suppress=unmatchedSuppression
+      - --suppress=checkersReport
+      - --suppress=missingIncludeSystem
+      - "--template={file}:{line}:{message}"

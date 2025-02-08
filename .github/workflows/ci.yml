@@ -1,5 +1,5 @@
 ---
-# Copyright © 2024 Matt Robinson
+# Copyright © 2024-2025 Matt Robinson
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install packages
-        run: sudo apt-get install libperl-critic-perl
+        run: sudo apt-get install libperl-critic-perl cppcheck
 
       - name: Install Overcommit and sign
         run: |
