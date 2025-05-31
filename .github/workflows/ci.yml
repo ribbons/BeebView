@@ -55,8 +55,9 @@ jobs:
 
       - name: Linux Dependencies
         if: matrix.runner == 'ubuntu-latest'
-        run: sudo apt-get install qt6-base-dev libgl-dev
-                                  libipc-system-simple-perl
+        run: |
+          sudo apt-get update
+          sudo apt-get install qt6-base-dev libgl-dev libipc-system-simple-perl
 
       - name: Windows Dependencies
         if: matrix.runner == 'windows-latest'
