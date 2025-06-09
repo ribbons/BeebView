@@ -61,7 +61,7 @@ jobs:
 
       - name: Windows Dependencies
         if: matrix.runner == 'windows-latest'
-        uses: jurplel/install-qt-action@12aa0336e1e410b3c6dff5e0722547f7a37e8c60
+        uses: jurplel/install-qt-action@d325aaf2a8baeeda41ad0b5d39f84a6af9bcf005
         with:
           version: 6.*
           arch: win64_msvc2022_64
